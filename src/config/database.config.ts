@@ -28,7 +28,7 @@ export class DatabaseConfig {
         Answer,
         Result,
       ],
-      synchronize: configService.get('NODE_ENV') === 'development',
+      synchronize: true, // Temporarily enabled for initial table creation
       logging: configService.get('NODE_ENV') === 'development',
       migrations: ['dist/migrations/*.js'],
       migrationsRun: false,

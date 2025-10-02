@@ -26,7 +26,8 @@
     "migration:revert": "npm run typeorm -- migration:revert -d src/config/data-source.ts",
     "seed": "ts-node src/seeds/seed-admin.ts",
     "render:build": "npm run build",
-    "render:start": "npm run start:prod"
+    "render:start": "npm run start:prod",
+    "db:setup": "npm run seed"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
