@@ -194,7 +194,10 @@ export class AttemptsService {
 
   private async triggerAutomaticScoring(attemptId: string): Promise<void> {
     try {
+      console.log(`Starting automatic scoring for attempt ${attemptId}`);
+      
       await this.examScoringService.scoreExam(attemptId);
+      console.log(`Scoring completed for attempt ${attemptId}`);
       
       // Generate result after scoring is complete
       const attempt = await this.attemptRepository.findOne({
@@ -203,7 +206,11 @@ export class AttemptsService {
       });
       
       if (attempt) {
+        console.log(`Generating result for attempt ${attemptId}, student ${attempt.studentId}`);
         await this.resultsService.generateResult(attemptId, attempt.studentId);
+        console.log(`Result generated successfully for attempt ${attemptId}`);
+      } else {
+        console.error(`Attempt ${attemptId} not found when trying to generate result`);
       }
     } catch (error) {
       console.error(`Error in automatic scoring for attempt ${attemptId}:`, error);

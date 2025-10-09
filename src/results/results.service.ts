@@ -101,10 +101,18 @@ export class ResultsService {
       timeSpent: attempt.timeSpent,
       isPassed,
       passPercentage,
-      isPublished: false,
+      isPublished: true, // Make results immediately available to students
     });
 
     const savedResult = await this.resultRepository.save(result);
+    
+    console.log(`Result created successfully for attempt ${attemptId}:`, {
+      resultId: savedResult.id,
+      studentId: savedResult.studentId,
+      score: savedResult.score,
+      percentage: savedResult.percentage,
+      isPublished: savedResult.isPublished
+    });
     
     // Create a new object with questionResults included
     const resultWithQuestionResults = {
