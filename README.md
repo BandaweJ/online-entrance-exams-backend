@@ -50,6 +50,14 @@ TWILIO_ACCOUNT_SID=your_twilio_account_sid
 TWILIO_AUTH_TOKEN=your_twilio_auth_token
 TWILIO_FROM_NUMBER=your_twilio_phone_number
 
+# OpenAI Configuration (Required for AI scoring)
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=text-embedding-ada-002
+
+# AI Grader Configuration (Legacy - Optional)
+AI_GRADER_API_URL=https://api.example.com/grade
+AI_GRADER_API_KEY=your_ai_grader_api_key
+
 # CORS Configuration
 CORS_ORIGIN=http://localhost:4200
 ```
