@@ -14,8 +14,6 @@ build/
 .env.development
 .env.test
 .env.production
-env.example
-env.production
 
 # IDE files
 .vscode/
