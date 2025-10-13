@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ExamScoringService } from './exam-scoring.service';
+import { ScoringService } from './scoring.service';
 import { ScoringController } from './scoring.controller';
 import { ExamAttempt } from '../attempts/exam-attempt.entity';
 import { Answer } from '../answers/answer.entity';
@@ -12,8 +13,8 @@ import { AiGraderModule } from '../ai-grader/ai-grader.module';
     TypeOrmModule.forFeature([ExamAttempt, Answer, Question]),
     AiGraderModule,
   ],
-  providers: [ExamScoringService],
+  providers: [ExamScoringService, ScoringService],
   controllers: [ScoringController],
-  exports: [ExamScoringService],
+  exports: [ExamScoringService, ScoringService],
 })
 export class ScoringModule {}

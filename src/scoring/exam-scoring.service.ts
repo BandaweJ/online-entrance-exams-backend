@@ -6,6 +6,8 @@ import { Answer } from '../answers/answer.entity';
 import { Question } from '../questions/question.entity';
 import { AiGraderService } from '../ai-grader/ai-grader.service';
 import { AiGraderRequest } from '../ai-grader/interfaces/ai-grader.interface';
+import { ScoringService } from './scoring.service';
+import { ScoreRequestDto } from './dto/score-request.dto';
 
 @Injectable()
 export class ExamScoringService {
@@ -17,6 +19,7 @@ export class ExamScoringService {
     @InjectRepository(Question)
     private questionRepository: Repository<Question>,
     private aiGraderService: AiGraderService,
+    private scoringService: ScoringService,
   ) {}
 
   async scoreExam(attemptId: string): Promise<{
@@ -157,26 +160,25 @@ export class ExamScoringService {
       };
     }
 
-    // Prepare AI grading request with enhanced context
-    const aiRequest: AiGraderRequest = {
+    // Use internal OpenAI-based scoring service
+    const scoreRequest: ScoreRequestDto = {
+      question: question.questionText,
       correctAnswerText: correctAnswer,
       studentAnswerText: studentAnswer,
       totalMarks: parseFloat(question.marks.toString()),
       questionType: question.type,
-      questionText: question.questionText, // Add question context
-      questionId: question.id, // Add question ID for tracking
       rubric: question.explanation, // Use explanation as rubric if available
     };
 
     try {
-      const aiResponse = await this.aiGraderService.gradeAnswer(aiRequest);
+      const scoreResponse = await this.scoringService.calculateSimilarityScore(scoreRequest);
       
       return {
-        score: aiResponse.score,
-        feedback: aiResponse.feedback || 'Graded by AI',
+        score: scoreResponse.score,
+        feedback: scoreResponse.feedback || 'Graded using OpenAI embeddings',
       };
     } catch (error) {
-      console.error(`AI grading failed for question ${question.id}:`, error);
+      console.error(`OpenAI scoring failed for question ${question.id}:`, error);
       
       // Fallback to basic keyword matching
       return this.fallbackSubjectiveGrading(correctAnswer, studentAnswer, parseFloat(question.marks.toString()));
