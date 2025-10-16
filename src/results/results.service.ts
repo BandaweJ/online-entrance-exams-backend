@@ -374,6 +374,7 @@ export class ResultsService {
   }
 
   private async calculateRank(examId: string, score: number): Promise<number> {
+    // Count results with higher scores for this exam
     const betterResults = await this.resultRepository.count({
       where: { examId, score: MoreThan(score) },
     });
@@ -381,7 +382,15 @@ export class ResultsService {
   }
 
   private async getTotalStudentsForExam(examId: string): Promise<number> {
-    return this.resultRepository.count({ where: { examId } });
+    // Count unique students who have submitted attempts for this exam
+    const uniqueStudents = await this.attemptRepository
+      .createQueryBuilder('attempt')
+      .select('COUNT(DISTINCT attempt.studentId)', 'count')
+      .where('attempt.examId = :examId', { examId })
+      .andWhere('attempt.status = :status', { status: AttemptStatus.SUBMITTED })
+      .getRawOne();
+    
+    return parseInt(uniqueStudents.count) || 0;
   }
 
   private calculateGradeDistribution(
