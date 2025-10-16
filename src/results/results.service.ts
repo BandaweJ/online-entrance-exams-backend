@@ -285,7 +285,7 @@ export class ResultsService {
 
   async getStudentStats(studentId: string) {
     const results = await this.resultRepository.find({
-      where: { studentId, isPublished: true },
+      where: { studentId },
       relations: ["exam"],
     });
 
