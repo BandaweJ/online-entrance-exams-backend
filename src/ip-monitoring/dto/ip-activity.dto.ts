@@ -6,6 +6,7 @@ import {
   IsObject,
   IsDateString,
 } from "class-validator";
+import { Transform } from "class-transformer";
 
 export class CreateIpActivityDto {
   @IsString()
@@ -68,10 +69,12 @@ export class IpActivityFilterDto {
   endDate?: string;
 
   @IsOptional()
+  @Transform(({ value }) => parseInt(value))
   @IsNumber()
   page?: number = 1;
 
   @IsOptional()
+  @Transform(({ value }) => parseInt(value))
   @IsNumber()
   limit?: number = 20;
 }
