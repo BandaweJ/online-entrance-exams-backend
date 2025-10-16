@@ -10,7 +10,7 @@ async function seedAdmin() {
   const usersService = app.get(UsersService);
   const userRepository = app.get(getRepositoryToken(User));
 
-  const adminEmail = 'admin@school.com';
+  const adminEmail = 'admin@anarchyhigh.edu';
   const adminPassword = 'admin123';
 
   try {

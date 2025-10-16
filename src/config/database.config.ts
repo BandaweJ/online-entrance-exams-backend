@@ -8,6 +8,8 @@ import { Question } from '../questions/question.entity';
 import { ExamAttempt } from '../attempts/exam-attempt.entity';
 import { Answer } from '../answers/answer.entity';
 import { Result } from '../results/result.entity';
+import { IpActivity } from '../ip-monitoring/ip-activity.entity';
+import { IpBlocklist } from '../ip-monitoring/ip-blocklist.entity';
 
 export class DatabaseConfig {
   static getTypeOrmConfig(configService: ConfigService): TypeOrmModuleOptions {
@@ -27,6 +29,8 @@ export class DatabaseConfig {
         ExamAttempt,
         Answer,
         Result,
+        IpActivity,
+        IpBlocklist,
       ],
       synchronize: true, // Temporarily enabled for initial table creation
       logging: configService.get('NODE_ENV') === 'development',

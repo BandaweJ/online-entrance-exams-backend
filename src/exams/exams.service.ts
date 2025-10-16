@@ -47,9 +47,15 @@ export class ExamsService {
   async update(id: string, updateExamDto: UpdateExamDto): Promise<Exam> {
     const exam = await this.findOne(id);
     
-    // Prevent updating published exams
+    // For published exams, only allow certain updates
     if (exam.status === ExamStatus.PUBLISHED) {
-      throw new BadRequestException('Cannot update published exam');
+      const allowedFields = ['examDate', 'durationMinutes', 'description'];
+      const updateFields = Object.keys(updateExamDto);
+      const hasDisallowedFields = updateFields.some(field => !allowedFields.includes(field));
+      
+      if (hasDisallowedFields) {
+        throw new BadRequestException('Cannot update exam content after publishing. Only exam date, duration, and description can be modified.');
+      }
     }
 
     Object.assign(exam, updateExamDto);

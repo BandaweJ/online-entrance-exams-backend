@@ -18,12 +18,13 @@ import { ResultsModule } from './results/results.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { AiGraderModule } from './ai-grader/ai-grader.module';
 import { ScoringModule } from './scoring/scoring.module';
+import { IpMonitoringModule } from './ip-monitoring/ip-monitoring.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '../.env',
+      envFilePath: '.env',
     }),
     TypeOrmModule.forRootAsync({
       imports: [AppConfigModule],
@@ -42,6 +43,7 @@ import { ScoringModule } from './scoring/scoring.module';
     NotificationsModule,
     AiGraderModule,
     ScoringModule,
+    IpMonitoringModule,
   ],
   controllers: [AppController],
   providers: [AppService],

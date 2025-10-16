@@ -10,7 +10,7 @@ import { Answer } from '../answers/answer.entity';
 import { Result } from '../results/result.entity';
 
 // Load environment variables
-config({ path: '../.env' });
+config({ path: '.env' });
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
