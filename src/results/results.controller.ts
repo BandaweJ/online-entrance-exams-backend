@@ -10,18 +10,23 @@ import {
 } from "@nestjs/common";
 import { ResultsService } from "./results.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { RolesGuard } from "../auth/roles.guard";
+import { Roles } from "../auth/roles.decorator";
+import { UserRole } from "../users/user.entity";
 
 @Controller("results")
-@UseGuards(JwtAuthGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ResultsController {
   constructor(private readonly resultsService: ResultsService) {}
 
   @Post("generate/:attemptId")
+  @Roles(UserRole.ADMIN)
   generateResult(@Param("attemptId") attemptId: string, @Request() req) {
     return this.resultsService.generateResult(attemptId, req.user.id);
   }
 
   @Get()
+  @Roles(UserRole.ADMIN)
   findAll(
     @Query("studentId") studentId?: string,
     @Query("examId") examId?: string,
@@ -35,11 +40,13 @@ export class ResultsController {
   }
 
   @Get("exam/:examId")
+  @Roles(UserRole.ADMIN)
   getExamResults(@Param("examId") examId: string) {
     return this.resultsService.getExamResults(examId);
   }
 
   @Get("exam/:examId/stats")
+  @Roles(UserRole.ADMIN)
   getExamStats(@Param("examId") examId: string) {
     return this.resultsService.getExamStats(examId);
   }
@@ -55,6 +62,7 @@ export class ResultsController {
   }
 
   @Patch(":id/publish")
+  @Roles(UserRole.ADMIN)
   publishResult(@Param("id") id: string) {
     return this.resultsService.publishResult(id);
   }

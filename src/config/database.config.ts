@@ -32,7 +32,7 @@ export class DatabaseConfig {
         IpActivity,
         IpBlocklist,
       ],
-      synchronize: true, // Temporarily enabled for initial table creation
+      synchronize: configService.get("NODE_ENV") === "development", // Only enable in development
       logging: configService.get("NODE_ENV") === "development",
       migrations: ["dist/migrations/*.js"],
       migrationsRun: false,
