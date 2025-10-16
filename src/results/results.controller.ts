@@ -30,10 +30,8 @@ export class ResultsController {
   }
 
   @Get("student")
-  getStudentResults() {
-    // Temporarily use hardcoded user ID for testing
-    const userId = "1cbafbdb-fb5e-402b-97dd-09814e36a6d5";
-    return this.resultsService.getStudentResults(userId);
+  getStudentResults(@Request() req) {
+    return this.resultsService.getStudentResults(req.user.id);
   }
 
   @Get("exam/:examId")
