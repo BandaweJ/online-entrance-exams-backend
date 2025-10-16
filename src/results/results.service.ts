@@ -143,6 +143,22 @@ export class ResultsService {
       order: { createdAt: "DESC" },
     });
     console.log('Found results:', results.length);
+    
+    // Debug: Check for submitted attempts that should have results
+    const submittedAttempts = await this.attemptRepository.find({
+      where: { status: 'submitted' },
+      relations: ['student', 'exam']
+    });
+    console.log('Found submitted attempts:', submittedAttempts.length);
+    if (submittedAttempts.length > 0) {
+      console.log('Sample submitted attempt:', {
+        id: submittedAttempts[0].id,
+        studentId: submittedAttempts[0].studentId,
+        examId: submittedAttempts[0].examId,
+        isGraded: submittedAttempts[0].isGraded
+      });
+    }
+    
     return results;
   }
 
