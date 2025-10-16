@@ -6,7 +6,7 @@ import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { UserRole } from '../users/user.entity';
 
-@Controller('api/ip-monitoring')
+@Controller('ip-monitoring')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class IpMonitoringController {
   constructor(private readonly ipMonitoringService: IpMonitoringService) {}

@@ -19,6 +19,9 @@ import { NotificationsModule } from './notifications/notifications.module';
 import { AiGraderModule } from './ai-grader/ai-grader.module';
 import { ScoringModule } from './scoring/scoring.module';
 import { IpMonitoringModule } from './ip-monitoring/ip-monitoring.module';
+import { AnalyticsModule } from './analytics/analytics.module';
+import { HealthModule } from './health/health.module';
+import { LogsModule } from './logs/logs.module';
 
 @Module({
   imports: [
@@ -44,6 +47,9 @@ import { IpMonitoringModule } from './ip-monitoring/ip-monitoring.module';
     AiGraderModule,
     ScoringModule,
     IpMonitoringModule,
+    AnalyticsModule,
+    HealthModule,
+    LogsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
