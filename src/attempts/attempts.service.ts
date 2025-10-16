@@ -212,10 +212,15 @@ export class AttemptsService {
 
     const savedAttempt = await this.attemptRepository.save(attempt);
 
-    // Trigger automatic scoring in the background
-    this.triggerAutomaticScoring(id).catch((error) => {
-      console.error(`Automatic scoring failed for attempt ${id}:`, error);
-    });
+    // Generate result immediately after submission
+    try {
+      console.log(`Starting immediate result generation for attempt ${id}`);
+      await this.triggerAutomaticScoring(id);
+      console.log(`Result generation completed for attempt ${id}`);
+    } catch (error) {
+      console.error(`Result generation failed for attempt ${id}:`, error);
+      // Don't throw error - submission was successful, just result generation failed
+    }
 
     return savedAttempt;
   }
