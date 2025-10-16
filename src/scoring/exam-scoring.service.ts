@@ -45,9 +45,8 @@ export class ExamScoringService {
       throw new BadRequestException("Cannot score non-submitted attempt");
     }
 
-    if (attempt.isGraded) {
-      throw new BadRequestException("Exam has already been graded");
-    }
+    // Note: We don't check isGraded here as it's not properly maintained
+    // The results service will handle duplicate result creation
 
     const answers = attempt.answers || [];
     const gradedAnswers: Answer[] = [];

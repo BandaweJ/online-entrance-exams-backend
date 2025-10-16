@@ -53,10 +53,8 @@ export class ResultsService {
       return existingResult;
     }
 
-    // Check if attempt is already graded
-    if (attempt.isGraded) {
-      throw new BadRequestException("Exam has already been graded");
-    }
+    // Check if attempt is already graded by looking for existing result
+    // (The isGraded field on attempt is not currently being used properly)
 
     // Score the exam using the new scoring system
     const scoringResult = await this.examScoringService.scoreExam(attemptId);
@@ -111,6 +109,10 @@ export class ResultsService {
     });
 
     const savedResult = await this.resultRepository.save(result);
+
+    // Mark the attempt as graded
+    attempt.isGraded = true;
+    await this.attemptRepository.save(attempt);
 
     console.log(`Result created successfully for attempt ${attemptId}:`, {
       resultId: savedResult.id,
