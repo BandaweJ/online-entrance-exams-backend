@@ -233,9 +233,9 @@ export class ResultsService {
 
   async getStudentResults(studentId: string): Promise<Result[]> {
     try {
-      // Test with a very simple query first
       const results = await this.resultRepository.find({
         where: { studentId },
+        relations: ["exam", "student", "attempt"],
         order: { createdAt: "DESC" },
       });
       return results;
