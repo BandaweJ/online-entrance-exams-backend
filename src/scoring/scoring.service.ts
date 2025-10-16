@@ -1,33 +1,41 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import OpenAI from 'openai';
-import { ScoreRequestDto } from './dto/score-request.dto';
-import { ScoreResponseDto } from './dto/score-response.dto';
+import { Injectable, BadRequestException } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import OpenAI from "openai";
+import { ScoreRequestDto } from "./dto/score-request.dto";
+import { ScoreResponseDto } from "./dto/score-response.dto";
 
 @Injectable()
 export class ScoringService {
   private openai: OpenAI;
 
   constructor(private configService: ConfigService) {
-    const apiKey = this.configService.get<string>('OPENAI_API_KEY');
+    const apiKey = this.configService.get<string>("OPENAI_API_KEY");
     if (!apiKey) {
-      throw new Error('OPENAI_API_KEY is required');
+      throw new Error("OPENAI_API_KEY is required");
     }
-    
+
     this.openai = new OpenAI({
       apiKey: apiKey,
     });
   }
 
-  async calculateSimilarityScore(request: ScoreRequestDto): Promise<ScoreResponseDto> {
+  async calculateSimilarityScore(
+    request: ScoreRequestDto,
+  ): Promise<ScoreResponseDto> {
     try {
       // Validate input
-      if (!request.question || !request.correctAnswerText || !request.studentAnswerText) {
-        throw new BadRequestException('Question, correctAnswerText, and studentAnswerText are all required');
+      if (
+        !request.question ||
+        !request.correctAnswerText ||
+        !request.studentAnswerText
+      ) {
+        throw new BadRequestException(
+          "Question, correctAnswerText, and studentAnswerText are all required",
+        );
       }
 
       if (request.totalMarks <= 0) {
-        throw new BadRequestException('totalMarks must be greater than 0');
+        throw new BadRequestException("totalMarks must be greater than 0");
       }
 
       // Create contextualized texts by appending question to both answers
@@ -41,7 +49,10 @@ export class ScoringService {
       ]);
 
       // Calculate cosine similarity
-      const similarity = this.calculateCosineSimilarity(correctEmbedding, studentEmbedding);
+      const similarity = this.calculateCosineSimilarity(
+        correctEmbedding,
+        studentEmbedding,
+      );
 
       // Calculate score based on similarity and total marks
       const score = Math.round(similarity * request.totalMarks * 100) / 100;
@@ -60,14 +71,18 @@ export class ScoringService {
       if (error instanceof BadRequestException) {
         throw error;
       }
-      throw new BadRequestException(`Error calculating similarity: ${error.message}`);
+      throw new BadRequestException(
+        `Error calculating similarity: ${error.message}`,
+      );
     }
   }
 
   private async getEmbedding(text: string): Promise<number[]> {
     try {
-      const model = this.configService.get<string>('OPENAI_MODEL') || 'text-embedding-ada-002';
-      
+      const model =
+        this.configService.get<string>("OPENAI_MODEL") ||
+        "text-embedding-ada-002";
+
       const response = await this.openai.embeddings.create({
         model: model,
         input: text,
@@ -79,9 +94,12 @@ export class ScoringService {
     }
   }
 
-  private calculateCosineSimilarity(vectorA: number[], vectorB: number[]): number {
+  private calculateCosineSimilarity(
+    vectorA: number[],
+    vectorB: number[],
+  ): number {
     if (vectorA.length !== vectorB.length) {
-      throw new Error('Vectors must have the same length');
+      throw new Error("Vectors must have the same length");
     }
 
     let dotProduct = 0;
@@ -104,21 +122,21 @@ export class ScoringService {
     return dotProduct / (normA * normB);
   }
 
-  private generateFeedback(similarity: number, questionType?: string): string {
+  private generateFeedback(similarity: number, _questionType?: string): string {
     const percentage = similarity * 100;
-    
+
     if (percentage >= 90) {
-      return 'Excellent answer! Very close to the expected response.';
+      return "Excellent answer! Very close to the expected response.";
     } else if (percentage >= 75) {
-      return 'Good answer! Shows strong understanding of the topic.';
+      return "Good answer! Shows strong understanding of the topic.";
     } else if (percentage >= 60) {
-      return 'Fair answer. Some key points are covered but could be improved.';
+      return "Fair answer. Some key points are covered but could be improved.";
     } else if (percentage >= 40) {
-      return 'Partial answer. Some relevant points mentioned but missing key concepts.';
+      return "Partial answer. Some relevant points mentioned but missing key concepts.";
     } else if (percentage >= 20) {
-      return 'Limited answer. Very few relevant points covered.';
+      return "Limited answer. Very few relevant points covered.";
     } else {
-      return 'Insufficient answer. Does not adequately address the question.';
+      return "Insufficient answer. Does not adequately address the question.";
     }
   }
 }

@@ -7,60 +7,60 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
-} from 'typeorm';
-import { Student } from '../students/student.entity';
-import { Exam } from '../exams/exam.entity';
-import { Answer } from '../answers/answer.entity';
-import { Result } from '../results/result.entity';
+} from "typeorm";
+import { Student } from "../students/student.entity";
+import { Exam } from "../exams/exam.entity";
+import { Answer } from "../answers/answer.entity";
+import { Result } from "../results/result.entity";
 
 export enum AttemptStatus {
-  IN_PROGRESS = 'in_progress',
-  PAUSED = 'paused',
-  SUBMITTED = 'submitted',
-  TIMED_OUT = 'timed_out',
-  DISQUALIFIED = 'disqualified',
+  IN_PROGRESS = "in_progress",
+  PAUSED = "paused",
+  SUBMITTED = "submitted",
+  TIMED_OUT = "timed_out",
+  DISQUALIFIED = "disqualified",
 }
 
-@Entity('exam_attempts')
+@Entity("exam_attempts")
 export class ExamAttempt {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: AttemptStatus,
     default: AttemptStatus.IN_PROGRESS,
   })
   status: AttemptStatus;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   startedAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   submittedAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   pausedAt: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   resumedAt: Date;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: "int", default: 0 })
   timeSpent: number; // in seconds
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: "int", default: 0 })
   questionsAnswered: number;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: "int", default: 0 })
   totalQuestions: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+  @Column({ type: "decimal", precision: 5, scale: 2, default: 0 })
   score: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+  @Column({ type: "decimal", precision: 5, scale: 2, default: 0 })
   totalMarks: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+  @Column({ type: "decimal", precision: 5, scale: 2, default: 0 })
   percentage: number;
 
   @Column({ default: false })
@@ -72,15 +72,17 @@ export class ExamAttempt {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => Student, (student) => student.examAttempts, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'studentId' })
+  @ManyToOne(() => Student, (student) => student.examAttempts, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn({ name: "studentId" })
   student: Student;
 
   @Column()
   studentId: string;
 
-  @ManyToOne(() => Exam, (exam) => exam.attempts, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'examId' })
+  @ManyToOne(() => Exam, (exam) => exam.attempts, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "examId" })
   exam: Exam;
 
   @Column()
@@ -113,6 +115,6 @@ export class ExamAttempt {
     const hours = Math.floor(this.timeSpent / 3600);
     const minutes = Math.floor((this.timeSpent % 3600) / 60);
     const seconds = this.timeSpent % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }
 }

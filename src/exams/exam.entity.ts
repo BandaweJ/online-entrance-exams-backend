@@ -7,20 +7,20 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
-} from 'typeorm';
-import { User } from '../users/user.entity';
-import { Section } from './section.entity';
-import { ExamAttempt } from '../attempts/exam-attempt.entity';
+} from "typeorm";
+import { User } from "../users/user.entity";
+import { Section } from "./section.entity";
+import { ExamAttempt } from "../attempts/exam-attempt.entity";
 
 export enum ExamStatus {
-  DRAFT = 'draft',
-  PUBLISHED = 'published',
-  CLOSED = 'closed',
+  DRAFT = "draft",
+  PUBLISHED = "published",
+  CLOSED = "closed",
 }
 
-@Entity('exams')
+@Entity("exams")
 export class Exam {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -35,20 +35,20 @@ export class Exam {
   @Column()
   examDate: Date;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   durationMinutes: number;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: ExamStatus,
     default: ExamStatus.DRAFT,
   })
   status: ExamStatus;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+  @Column({ type: "decimal", precision: 5, scale: 2, default: 0 })
   totalMarks: number;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: "int", default: 0 })
   totalQuestions: number;
 
   @Column({ default: true })
@@ -61,7 +61,7 @@ export class Exam {
   updatedAt: Date;
 
   @ManyToOne(() => User, (user) => user.id)
-  @JoinColumn({ name: 'createdBy' })
+  @JoinColumn({ name: "createdBy" })
   createdBy: User;
 
   @OneToMany(() => Section, (section) => section.exam, { cascade: true })

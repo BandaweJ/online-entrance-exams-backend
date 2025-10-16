@@ -7,45 +7,45 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
-} from 'typeorm';
-import { Section } from '../exams/section.entity';
-import { Answer } from '../answers/answer.entity';
+} from "typeorm";
+import { Section } from "../exams/section.entity";
+import { Answer } from "../answers/answer.entity";
 
 export enum QuestionType {
-  MULTIPLE_CHOICE = 'multiple_choice',
-  TRUE_FALSE = 'true_false',
-  SHORT_ANSWER = 'short_answer',
-  ESSAY = 'essay',
+  MULTIPLE_CHOICE = "multiple_choice",
+  TRUE_FALSE = "true_false",
+  SHORT_ANSWER = "short_answer",
+  ESSAY = "essay",
 }
 
-@Entity('questions')
+@Entity("questions")
 export class Question {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'text' })
+  @Column({ type: "text" })
   questionText: string;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: QuestionType,
     default: QuestionType.MULTIPLE_CHOICE,
   })
   type: QuestionType;
 
-  @Column({ type: 'json', nullable: true })
+  @Column({ type: "json", nullable: true })
   options: string[]; // For multiple choice questions
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   correctAnswer: string;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2 })
+  @Column({ type: "decimal", precision: 5, scale: 2 })
   marks: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   order: number;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: "text", nullable: true })
   explanation: string;
 
   @Column({ default: true })
@@ -57,8 +57,10 @@ export class Question {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => Section, (section) => section.questions, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'sectionId' })
+  @ManyToOne(() => Section, (section) => section.questions, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn({ name: "sectionId" })
   section: Section;
 
   @Column()

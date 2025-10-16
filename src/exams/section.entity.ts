@@ -7,13 +7,13 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
-} from 'typeorm';
-import { Exam } from './exam.entity';
-import { Question } from '../questions/question.entity';
+} from "typeorm";
+import { Exam } from "./exam.entity";
+import { Question } from "../questions/question.entity";
 
-@Entity('sections')
+@Entity("sections")
 export class Section {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -22,13 +22,13 @@ export class Section {
   @Column({ nullable: true })
   description: string;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   order: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2, default: 0 })
+  @Column({ type: "decimal", precision: 5, scale: 2, default: 0 })
   totalMarks: number;
 
-  @Column({ type: 'int', default: 0 })
+  @Column({ type: "int", default: 0 })
   questionCount: number;
 
   @Column({ default: true })
@@ -40,8 +40,8 @@ export class Section {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => Exam, (exam) => exam.sections, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'examId' })
+  @ManyToOne(() => Exam, (exam) => exam.sections, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "examId" })
   exam: Exam;
 
   @Column()

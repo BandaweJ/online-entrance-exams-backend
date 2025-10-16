@@ -7,13 +7,13 @@ import {
   ManyToOne,
   OneToMany,
   JoinColumn,
-} from 'typeorm';
-import { User } from '../users/user.entity';
-import { ExamAttempt } from '../attempts/exam-attempt.entity';
+} from "typeorm";
+import { User } from "../users/user.entity";
+import { ExamAttempt } from "../attempts/exam-attempt.entity";
 
-@Entity('students')
+@Entity("students")
 export class Student {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column()
@@ -53,7 +53,7 @@ export class Student {
   updatedAt: Date;
 
   @ManyToOne(() => User, (user) => user.students)
-  @JoinColumn({ name: 'createdBy' })
+  @JoinColumn({ name: "createdBy" })
   user: User;
 
   @Column()

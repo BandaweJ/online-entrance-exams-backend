@@ -1,5 +1,5 @@
-import { IsOptional, IsNumber, IsEnum } from 'class-validator';
-import { AttemptStatus } from '../exam-attempt.entity';
+import { IsOptional, IsNumber, IsEnum } from "class-validator";
+import { AttemptStatus } from "../exam-attempt.entity";
 
 export class UpdateAttemptDto {
   @IsOptional()

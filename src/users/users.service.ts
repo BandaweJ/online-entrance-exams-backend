@@ -1,7 +1,7 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { User, UserRole } from './user.entity';
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
+import { User, UserRole } from "./user.entity";
 
 @Injectable()
 export class UsersService {
@@ -12,18 +12,34 @@ export class UsersService {
 
   async findAll(): Promise<User[]> {
     return this.userRepository.find({
-      select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt'],
+      select: [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "role",
+        "isActive",
+        "createdAt",
+      ],
     });
   }
 
   async findOne(id: string): Promise<User> {
     const user = await this.userRepository.findOne({
       where: { id },
-      select: ['id', 'email', 'firstName', 'lastName', 'role', 'isActive', 'createdAt'],
+      select: [
+        "id",
+        "email",
+        "firstName",
+        "lastName",
+        "role",
+        "isActive",
+        "createdAt",
+      ],
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException("User not found");
     }
 
     return user;
@@ -35,7 +51,7 @@ export class UsersService {
 
   async update(id: string, updateData: Partial<User>): Promise<User> {
     const user = await this.findOne(id);
-    
+
     Object.assign(user, updateData);
     return this.userRepository.save(user);
   }
@@ -54,9 +70,15 @@ export class UsersService {
 
   async getStats() {
     const totalUsers = await this.userRepository.count();
-    const activeUsers = await this.userRepository.count({ where: { isActive: true } });
-    const adminUsers = await this.userRepository.count({ where: { role: UserRole.ADMIN } });
-    const studentUsers = await this.userRepository.count({ where: { role: UserRole.STUDENT } });
+    const activeUsers = await this.userRepository.count({
+      where: { isActive: true },
+    });
+    const adminUsers = await this.userRepository.count({
+      where: { role: UserRole.ADMIN },
+    });
+    const studentUsers = await this.userRepository.count({
+      where: { role: UserRole.STUDENT },
+    });
 
     return {
       totalUsers,

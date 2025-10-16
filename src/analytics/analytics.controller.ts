@@ -6,82 +6,90 @@ import {
   UseGuards,
   Res,
   Header,
-} from '@nestjs/common';
-import { Response } from 'express';
-import { AnalyticsService } from './analytics.service';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
-import { UserRole } from '../users/user.entity';
+} from "@nestjs/common";
+import { Response } from "express";
+import { AnalyticsService } from "./analytics.service";
+import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { RolesGuard } from "../auth/roles.guard";
+import { Roles } from "../auth/roles.decorator";
+import { UserRole } from "../users/user.entity";
 
-@Controller('analytics')
+@Controller("analytics")
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class AnalyticsController {
   constructor(private readonly analyticsService: AnalyticsService) {}
 
-  @Get('performance-trends')
+  @Get("performance-trends")
   @Roles(UserRole.ADMIN)
   async getPerformanceTrends(
-    @Query('period') period: 'week' | 'month' | 'quarter' | 'year' = 'month',
-    @Query('examId') examId?: string,
+    @Query("period") period: "week" | "month" | "quarter" | "year" = "month",
+    @Query("examId") examId?: string,
   ) {
     return this.analyticsService.getPerformanceTrends(period, examId);
   }
 
-  @Get('student-performance')
+  @Get("student-performance")
   @Roles(UserRole.ADMIN)
   async getStudentPerformance(
-    @Query('limit') limit: number = 50,
-    @Query('sortBy') sortBy: 'averageScore' | 'improvement' | 'totalExams' = 'averageScore',
+    @Query("limit") limit: number = 50,
+    @Query("sortBy")
+    sortBy: "averageScore" | "improvement" | "totalExams" = "averageScore",
   ) {
     return this.analyticsService.getStudentPerformanceMetrics(limit, sortBy);
   }
 
-  @Get('exam-analytics/:examId')
+  @Get("exam-analytics/:examId")
   @Roles(UserRole.ADMIN)
-  async getExamAnalytics(@Param('examId') examId: string) {
+  async getExamAnalytics(@Param("examId") examId: string) {
     return this.analyticsService.getExamAnalytics(examId);
   }
 
-  @Get('time-based')
+  @Get("time-based")
   @Roles(UserRole.ADMIN)
   async getTimeBasedAnalytics(
-    @Query('period') period: 'day' | 'week' | 'month' = 'week',
-    @Query('examId') examId?: string,
+    @Query("period") period: "day" | "week" | "month" = "week",
+    @Query("examId") examId?: string,
   ) {
     return this.analyticsService.getTimeBasedAnalytics(period, examId);
   }
 
-  @Get('subject-performance')
+  @Get("subject-performance")
   @Roles(UserRole.ADMIN)
   async getSubjectPerformance() {
     return this.analyticsService.getSubjectPerformance();
   }
 
-  @Get('export/:type')
+  @Get("export/:type")
   @Roles(UserRole.ADMIN)
-  @Header('Content-Type', 'text/csv')
+  @Header("Content-Type", "text/csv")
   async exportData(
-    @Param('type') type: 'performance' | 'students' | 'exams' | 'time-based',
+    @Param("type") type: "performance" | "students" | "exams" | "time-based",
     @Res() res: Response,
-    @Query('format') format: 'csv' | 'json' = 'json',
-    @Query('period') period?: string,
-    @Query('examId') examId?: string,
-    @Query('limit') limit?: number,
-    @Query('sortBy') sortBy?: string,
+    @Query("format") format: "csv" | "json" = "json",
+    @Query("period") period?: string,
+    @Query("examId") examId?: string,
+    @Query("limit") limit?: number,
+    @Query("sortBy") sortBy?: string,
   ) {
     const filters = { period, examId, limit, sortBy };
-    const data = await this.analyticsService.exportAnalyticsData(type, format, filters);
+    const data = await this.analyticsService.exportAnalyticsData(
+      type,
+      format,
+      filters,
+    );
 
-    if (format === 'csv') {
-      res.setHeader('Content-Disposition', `attachment; filename="${type}-analytics.csv"`);
+    if (format === "csv") {
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${type}-analytics.csv"`,
+      );
       res.send(data);
     } else {
       res.json(data);
     }
   }
 
-  @Get('dashboard-summary')
+  @Get("dashboard-summary")
   @Roles(UserRole.ADMIN)
   async getDashboardSummary() {
     const [
@@ -90,9 +98,9 @@ export class AnalyticsController {
       timeBasedAnalytics,
       subjectPerformance,
     ] = await Promise.all([
-      this.analyticsService.getPerformanceTrends('month'),
-      this.analyticsService.getStudentPerformanceMetrics(10, 'averageScore'),
-      this.analyticsService.getTimeBasedAnalytics('week'),
+      this.analyticsService.getPerformanceTrends("month"),
+      this.analyticsService.getStudentPerformanceMetrics(10, "averageScore"),
+      this.analyticsService.getTimeBasedAnalytics("week"),
       this.analyticsService.getSubjectPerformance(),
     ]);
 

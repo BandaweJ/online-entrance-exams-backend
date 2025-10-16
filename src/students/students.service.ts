@@ -1,12 +1,16 @@
-import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
-import { Student } from './student.entity';
-import { User } from '../users/user.entity';
-import { CreateStudentDto } from './dto/create-student.dto';
-import { UpdateStudentDto } from './dto/update-student.dto';
-import { NotificationsService } from '../notifications/notifications.service';
-import * as bcrypt from 'bcrypt';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, Like } from "typeorm";
+import { Student } from "./student.entity";
+import { User } from "../users/user.entity";
+import { CreateStudentDto } from "./dto/create-student.dto";
+import { UpdateStudentDto } from "./dto/update-student.dto";
+import { NotificationsService } from "../notifications/notifications.service";
+import * as bcrypt from "bcrypt";
 
 @Injectable()
 export class StudentsService {
@@ -18,14 +22,17 @@ export class StudentsService {
     private notificationsService: NotificationsService,
   ) {}
 
-  async create(createStudentDto: CreateStudentDto, createdBy: string): Promise<Student> {
+  async create(
+    createStudentDto: CreateStudentDto,
+    createdBy: string,
+  ): Promise<Student> {
     // Check if student with email already exists
     const existingStudent = await this.studentRepository.findOne({
       where: { email: createStudentDto.email },
     });
 
     if (existingStudent) {
-      throw new ConflictException('Student with this email already exists');
+      throw new ConflictException("Student with this email already exists");
     }
 
     // Generate unique student ID
@@ -51,19 +58,19 @@ export class StudentsService {
 
   async findAll(): Promise<Student[]> {
     return this.studentRepository.find({
-      relations: ['user'],
-      order: { createdAt: 'DESC' },
+      relations: ["user"],
+      order: { createdAt: "DESC" },
     });
   }
 
   async findOne(id: string): Promise<Student> {
     const student = await this.studentRepository.findOne({
       where: { id },
-      relations: ['user'],
+      relations: ["user"],
     });
 
     if (!student) {
-      throw new NotFoundException('Student not found');
+      throw new NotFoundException("Student not found");
     }
 
     return student;
@@ -72,20 +79,23 @@ export class StudentsService {
   async findByEmail(email: string): Promise<Student> {
     return this.studentRepository.findOne({
       where: { email },
-      relations: ['user'],
+      relations: ["user"],
     });
   }
 
   async findByStudentId(studentId: string): Promise<Student> {
     return this.studentRepository.findOne({
       where: { studentId },
-      relations: ['user'],
+      relations: ["user"],
     });
   }
 
-  async update(id: string, updateStudentDto: UpdateStudentDto): Promise<Student> {
+  async update(
+    id: string,
+    updateStudentDto: UpdateStudentDto,
+  ): Promise<Student> {
     const student = await this.findOne(id);
-    
+
     Object.assign(student, updateStudentDto);
     return this.studentRepository.save(student);
   }
@@ -97,20 +107,24 @@ export class StudentsService {
 
   async resendCredentials(id: string): Promise<Student> {
     const student = await this.findOne(id);
-    
+
     // Generate new credentials
     const credentials = await this.generateCredentials(student);
-    
+
     // Send credentials
     await this.sendCredentials(student, credentials);
-    
+
     return student;
   }
 
   async getStats() {
     const totalStudents = await this.studentRepository.count();
-    const activeStudents = await this.studentRepository.count({ where: { isActive: true } });
-    const credentialsSent = await this.studentRepository.count({ where: { credentialsSent: true } });
+    const activeStudents = await this.studentRepository.count({
+      where: { isActive: true },
+    });
+    const credentialsSent = await this.studentRepository.count({
+      where: { credentialsSent: true },
+    });
 
     return {
       totalStudents,
@@ -124,26 +138,28 @@ export class StudentsService {
   private async generateStudentId(): Promise<string> {
     const year = new Date().getFullYear();
     const prefix = `STU${year}`;
-    
+
     // Find the last student ID for this year
     const lastStudent = await this.studentRepository.findOne({
       where: { studentId: Like(`${prefix}%`) },
-      order: { studentId: 'DESC' },
+      order: { studentId: "DESC" },
     });
 
     let nextNumber = 1;
     if (lastStudent) {
-      const lastNumber = parseInt(lastStudent.studentId.replace(prefix, ''));
+      const lastNumber = parseInt(lastStudent.studentId.replace(prefix, ""));
       nextNumber = lastNumber + 1;
     }
 
-    return `${prefix}${nextNumber.toString().padStart(4, '0')}`;
+    return `${prefix}${nextNumber.toString().padStart(4, "0")}`;
   }
 
-  private async generateCredentials(student: Student): Promise<{ username: string; password: string }> {
+  private async generateCredentials(
+    student: Student,
+  ): Promise<{ username: string; password: string }> {
     const username = student.email;
     const password = this.generateRandomPassword();
-    
+
     // Create or update user account
     const existingUser = await this.userRepository.findOne({
       where: { email: student.email },
@@ -154,7 +170,7 @@ export class StudentsService {
       const hashedPassword = await bcrypt.hash(password, 12);
       await this.userRepository.update(existingUser.id, {
         password: hashedPassword,
-        role: 'student' as any,
+        role: "student" as any,
         firstName: student.firstName,
         lastName: student.lastName,
       });
@@ -166,7 +182,7 @@ export class StudentsService {
         password: hashedPassword,
         firstName: student.firstName,
         lastName: student.lastName,
-        role: 'student' as any,
+        role: "student" as any,
         isActive: true,
       });
       await this.userRepository.save(user);
@@ -181,25 +197,35 @@ export class StudentsService {
   }
 
   private generateRandomPassword(): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let password = '';
+    const chars =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let password = "";
     for (let i = 0; i < 8; i++) {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return password;
   }
 
-  private async sendCredentials(student: Student, credentials: { username: string; password: string }): Promise<void> {
+  private async sendCredentials(
+    student: Student,
+    credentials: { username: string; password: string },
+  ): Promise<void> {
     try {
       // Send email
-      await this.notificationsService.sendCredentialsEmail(student, credentials);
-      
+      await this.notificationsService.sendCredentialsEmail(
+        student,
+        credentials,
+      );
+
       // Send SMS if phone number is available
       if (student.phone) {
-        await this.notificationsService.sendCredentialsSMS(student, credentials);
+        await this.notificationsService.sendCredentialsSMS(
+          student,
+          credentials,
+        );
       }
     } catch (error) {
-      console.error('Error sending credentials:', error);
+      console.error("Error sending credentials:", error);
       // Don't throw error to prevent student creation failure
     }
   }

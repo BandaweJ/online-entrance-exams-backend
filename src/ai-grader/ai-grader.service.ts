@@ -1,7 +1,14 @@
-import { Injectable, BadRequestException, InternalServerErrorException } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import axios from 'axios';
-import { AiGraderRequest, AiGraderResponse, AiGraderError } from './interfaces/ai-grader.interface';
+import {
+  Injectable,
+  BadRequestException,
+  InternalServerErrorException,
+} from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
+import axios from "axios";
+import {
+  AiGraderRequest,
+  AiGraderResponse,
+} from "./interfaces/ai-grader.interface";
 
 @Injectable()
 export class AiGraderService {
@@ -9,8 +16,8 @@ export class AiGraderService {
   private readonly apiKey: string;
 
   constructor(private configService: ConfigService) {
-    this.apiUrl = this.configService.get<string>('AI_GRADER_API_URL');
-    this.apiKey = this.configService.get<string>('AI_GRADER_API_KEY');
+    this.apiUrl = this.configService.get<string>("AI_GRADER_API_URL");
+    this.apiKey = this.configService.get<string>("AI_GRADER_API_KEY");
   }
 
   async gradeAnswer(request: AiGraderRequest): Promise<AiGraderResponse> {
@@ -37,26 +44,26 @@ export class AiGraderService {
         },
         {
           headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
+            Authorization: `Bearer ${this.apiKey}`,
+            "Content-Type": "application/json",
           },
           timeout: 30000, // 30 seconds timeout
-        }
+        },
       );
 
       return this.processResponse(response.data);
     } catch (error) {
-      console.error('AI Grader Error:', error);
-      
+      console.error("AI Grader Error:", error);
+
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 400) {
-          throw new BadRequestException('Invalid grading request');
+          throw new BadRequestException("Invalid grading request");
         } else if (error.response?.status === 401) {
-          throw new BadRequestException('Invalid API credentials');
+          throw new BadRequestException("Invalid API credentials");
         } else if (error.response?.status === 429) {
-          throw new BadRequestException('API rate limit exceeded');
-        } else if (error.code === 'ECONNABORTED') {
-          throw new InternalServerErrorException('AI grading service timeout');
+          throw new BadRequestException("API rate limit exceeded");
+        } else if (error.code === "ECONNABORTED") {
+          throw new InternalServerErrorException("AI grading service timeout");
         }
       }
 
@@ -65,16 +72,18 @@ export class AiGraderService {
     }
   }
 
-  async gradeMultipleAnswers(requests: AiGraderRequest[]): Promise<AiGraderResponse[]> {
+  async gradeMultipleAnswers(
+    requests: AiGraderRequest[],
+  ): Promise<AiGraderResponse[]> {
     const results: AiGraderResponse[] = [];
-    
+
     // Process each request individually to handle partial failures
     for (const request of requests) {
       try {
         const result = await this.gradeAnswer(request);
         results.push(result);
       } catch (error) {
-        console.error('Error grading individual answer:', error);
+        console.error("Error grading individual answer:", error);
         // Add a fallback result for failed grading
         results.push(this.fallbackGrading(request));
       }
@@ -84,23 +93,35 @@ export class AiGraderService {
   }
 
   private validateRequest(request: AiGraderRequest): void {
-    if (!request.correctAnswerText || request.correctAnswerText.trim().length === 0) {
-      throw new BadRequestException('Correct answer text is required');
+    if (
+      !request.correctAnswerText ||
+      request.correctAnswerText.trim().length === 0
+    ) {
+      throw new BadRequestException("Correct answer text is required");
     }
 
-    if (!request.studentAnswerText || request.studentAnswerText.trim().length === 0) {
-      throw new BadRequestException('Student answer text is required');
+    if (
+      !request.studentAnswerText ||
+      request.studentAnswerText.trim().length === 0
+    ) {
+      throw new BadRequestException("Student answer text is required");
     }
 
     if (!request.totalMarks || request.totalMarks <= 0) {
-      throw new BadRequestException('Total marks must be greater than 0');
+      throw new BadRequestException("Total marks must be greater than 0");
     }
   }
 
   private processResponse(data: any): AiGraderResponse {
     // Validate response structure
-    if (!data || typeof data.score !== 'number' || typeof data.totalMarks !== 'number') {
-      throw new InternalServerErrorException('Invalid response from AI grading service');
+    if (
+      !data ||
+      typeof data.score !== "number" ||
+      typeof data.totalMarks !== "number"
+    ) {
+      throw new InternalServerErrorException(
+        "Invalid response from AI grading service",
+      );
     }
 
     // Ensure score is within valid range
@@ -109,9 +130,9 @@ export class AiGraderService {
     return {
       score,
       totalMarks: data.totalMarks,
-      feedback: data.feedback || '',
+      feedback: data.feedback || "",
       confidence: data.confidence || 0,
-      reasoning: data.reasoning || '',
+      reasoning: data.reasoning || "",
     };
   }
 
@@ -121,52 +142,59 @@ export class AiGraderService {
     const studentAnswer = request.studentAnswerText.toLowerCase().trim();
 
     let score = 0;
-    let feedback = '';
+    let feedback = "";
 
-    if (request.questionType === 'true_false') {
+    if (request.questionType === "true_false") {
       // For true/false questions, exact match
       if (correctAnswer === studentAnswer) {
         score = request.totalMarks;
-        feedback = 'Correct answer!';
+        feedback = "Correct answer!";
       } else {
         score = 0;
-        feedback = 'Incorrect answer.';
+        feedback = "Incorrect answer.";
       }
-    } else if (request.questionType === 'multiple_choice') {
+    } else if (request.questionType === "multiple_choice") {
       // For multiple choice, exact match
       if (correctAnswer === studentAnswer) {
         score = request.totalMarks;
-        feedback = 'Correct answer!';
+        feedback = "Correct answer!";
       } else {
         score = 0;
-        feedback = 'Incorrect answer.';
+        feedback = "Incorrect answer.";
       }
     } else {
       // For short answer and essay questions, keyword matching
-      const correctKeywords = correctAnswer.split(/\s+/).filter(word => word.length > 2);
-      const studentKeywords = studentAnswer.split(/\s+/).filter(word => word.length > 2);
-      
-      const matchingKeywords = correctKeywords.filter(keyword => 
-        studentKeywords.some(studentKeyword => 
-          studentKeyword.includes(keyword) || keyword.includes(studentKeyword)
-        )
+      const correctKeywords = correctAnswer
+        .split(/\s+/)
+        .filter((word) => word.length > 2);
+      const studentKeywords = studentAnswer
+        .split(/\s+/)
+        .filter((word) => word.length > 2);
+
+      const matchingKeywords = correctKeywords.filter((keyword) =>
+        studentKeywords.some(
+          (studentKeyword) =>
+            studentKeyword.includes(keyword) ||
+            keyword.includes(studentKeyword),
+        ),
       );
 
-      const keywordMatchRatio = correctKeywords.length > 0 
-        ? matchingKeywords.length / correctKeywords.length 
-        : 0;
+      const keywordMatchRatio =
+        correctKeywords.length > 0
+          ? matchingKeywords.length / correctKeywords.length
+          : 0;
 
       // Calculate score based on keyword matching
       score = Math.round(request.totalMarks * keywordMatchRatio);
-      
+
       if (keywordMatchRatio >= 0.8) {
-        feedback = 'Good answer with most key points covered.';
+        feedback = "Good answer with most key points covered.";
       } else if (keywordMatchRatio >= 0.5) {
-        feedback = 'Partial answer with some key points covered.';
+        feedback = "Partial answer with some key points covered.";
       } else if (keywordMatchRatio > 0) {
-        feedback = 'Answer partially correct but missing key points.';
+        feedback = "Answer partially correct but missing key points.";
       } else {
-        feedback = 'Answer does not match the expected response.';
+        feedback = "Answer does not match the expected response.";
       }
     }
 
@@ -175,15 +203,15 @@ export class AiGraderService {
       totalMarks: request.totalMarks,
       feedback,
       confidence: 0.5, // Low confidence for fallback grading
-      reasoning: 'Graded using fallback keyword matching algorithm',
+      reasoning: "Graded using fallback keyword matching algorithm",
     };
   }
 
   async getServiceStatus(): Promise<{ status: string; message: string }> {
     if (!this.apiUrl || !this.apiKey) {
       return {
-        status: 'disabled',
-        message: 'AI grading service is not configured',
+        status: "disabled",
+        message: "AI grading service is not configured",
       };
     }
 
@@ -191,19 +219,19 @@ export class AiGraderService {
       // Test API connectivity
       await axios.get(this.apiUrl, {
         headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
+          Authorization: `Bearer ${this.apiKey}`,
         },
         timeout: 5000,
       });
 
       return {
-        status: 'active',
-        message: 'AI grading service is operational',
+        status: "active",
+        message: "AI grading service is operational",
       };
     } catch (error) {
       return {
-        status: 'error',
-        message: 'AI grading service is not responding',
+        status: "error",
+        message: "AI grading service is not responding",
       };
     }
   }

@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsNumber, IsBoolean, IsObject, IsDateString } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsNumber,
+  IsBoolean,
+  IsObject,
+  IsDateString,
+} from "class-validator";
 
 export class CreateIpActivityDto {
   @IsString()
@@ -82,10 +89,9 @@ export class BlockIpDto {
 
   @IsOptional()
   @IsString()
-  blockType?: string = 'manual';
+  blockType?: string = "manual";
 
   @IsOptional()
   @IsObject()
   metadata?: any;
 }
-

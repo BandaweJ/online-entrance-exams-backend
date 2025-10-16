@@ -1,5 +1,12 @@
-import { IsString, IsNumber, IsEnum, IsOptional, IsArray, Min } from 'class-validator';
-import { QuestionType } from '../question.entity';
+import {
+  IsString,
+  IsNumber,
+  IsEnum,
+  IsOptional,
+  IsArray,
+  Min,
+} from "class-validator";
+import { QuestionType } from "../question.entity";
 
 export class UpdateQuestionDto {
   @IsOptional()

@@ -1,10 +1,14 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThan, LessThan } from 'typeorm';
-import { IpActivity } from './ip-activity.entity';
-import { IpBlocklist } from './ip-blocklist.entity';
-import { CreateIpActivityDto, IpActivityFilterDto, BlockIpDto } from './dto/ip-activity.dto';
-import { Cron, CronExpression } from '@nestjs/schedule';
+import { Injectable, Logger } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, MoreThan, LessThan } from "typeorm";
+import { IpActivity } from "./ip-activity.entity";
+import { IpBlocklist } from "./ip-blocklist.entity";
+import {
+  CreateIpActivityDto,
+  IpActivityFilterDto,
+  BlockIpDto,
+} from "./dto/ip-activity.dto";
+import { Cron, CronExpression } from "@nestjs/schedule";
 
 @Injectable()
 export class IpMonitoringService {
@@ -21,10 +25,10 @@ export class IpMonitoringService {
     try {
       // Check if IP is blocked
       const isBlocked = await this.isIpBlocked(createDto.ipAddress);
-      
+
       // Get geolocation data (simplified - in production, use a proper service)
       const geoData = await this.getGeolocationData(createDto.ipAddress);
-      
+
       // Check for suspicious activity
       const isSuspicious = await this.detectSuspiciousActivity(createDto);
 
@@ -46,7 +50,7 @@ export class IpMonitoringService {
 
       return savedActivity;
     } catch (error) {
-      this.logger.error('Error logging IP activity:', error);
+      this.logger.error("Error logging IP activity:", error);
       throw error;
     }
   }
@@ -79,7 +83,9 @@ export class IpMonitoringService {
     if (existingBlock) {
       existingBlock.isActive = true;
       existingBlock.reason = blockDto.reason;
-      existingBlock.expiresAt = blockDto.expiresAt ? new Date(blockDto.expiresAt) : null;
+      existingBlock.expiresAt = blockDto.expiresAt
+        ? new Date(blockDto.expiresAt)
+        : null;
       existingBlock.blockType = blockDto.blockType;
       existingBlock.metadata = blockDto.metadata;
       existingBlock.violationCount += 1;
@@ -91,33 +97,36 @@ export class IpMonitoringService {
   }
 
   async unblockIp(ipAddress: string): Promise<void> {
-    await this.ipBlocklistRepository.update(
-      { ipAddress },
-      { isActive: false }
-    );
+    await this.ipBlocklistRepository.update({ ipAddress }, { isActive: false });
   }
 
   async getActivities(filter: IpActivityFilterDto) {
-    const query = this.ipActivityRepository.createQueryBuilder('activity');
+    const query = this.ipActivityRepository.createQueryBuilder("activity");
 
     if (filter.ipAddress) {
-      query.andWhere('activity.ipAddress = :ipAddress', { ipAddress: filter.ipAddress });
+      query.andWhere("activity.ipAddress = :ipAddress", {
+        ipAddress: filter.ipAddress,
+      });
     }
 
     if (filter.action) {
-      query.andWhere('activity.action = :action', { action: filter.action });
+      query.andWhere("activity.action = :action", { action: filter.action });
     }
 
     if (filter.isSuspicious !== undefined) {
-      query.andWhere('activity.isSuspicious = :isSuspicious', { isSuspicious: filter.isSuspicious });
+      query.andWhere("activity.isSuspicious = :isSuspicious", {
+        isSuspicious: filter.isSuspicious,
+      });
     }
 
     if (filter.isBlocked !== undefined) {
-      query.andWhere('activity.isBlocked = :isBlocked', { isBlocked: filter.isBlocked });
+      query.andWhere("activity.isBlocked = :isBlocked", {
+        isBlocked: filter.isBlocked,
+      });
     }
 
     if (filter.startDate && filter.endDate) {
-      query.andWhere('activity.createdAt BETWEEN :startDate AND :endDate', {
+      query.andWhere("activity.createdAt BETWEEN :startDate AND :endDate", {
         startDate: filter.startDate,
         endDate: filter.endDate,
       });
@@ -127,10 +136,7 @@ export class IpMonitoringService {
     const limit = filter.limit || 20;
     const skip = (page - 1) * limit;
 
-    query
-      .orderBy('activity.createdAt', 'DESC')
-      .skip(skip)
-      .take(limit);
+    query.orderBy("activity.createdAt", "DESC").skip(skip).take(limit);
 
     const [activities, total] = await query.getManyAndCount();
 
@@ -148,21 +154,21 @@ export class IpMonitoringService {
     startDate.setHours(startDate.getHours() - hours);
 
     const stats = await this.ipActivityRepository
-      .createQueryBuilder('activity')
+      .createQueryBuilder("activity")
       .select([
-        'COUNT(*) as total_requests',
-        'COUNT(CASE WHEN activity.isSuspicious = true THEN 1 END) as suspicious_requests',
-        'COUNT(CASE WHEN activity.action = :loginAction THEN 1 END) as login_attempts',
-        'COUNT(CASE WHEN activity.action = :examAction THEN 1 END) as exam_attempts',
-        'COUNT(DISTINCT activity.userId) as unique_users',
-        'COUNT(DISTINCT activity.examId) as unique_exams',
+        "COUNT(*) as total_requests",
+        "COUNT(CASE WHEN activity.isSuspicious = true THEN 1 END) as suspicious_requests",
+        "COUNT(CASE WHEN activity.action = :loginAction THEN 1 END) as login_attempts",
+        "COUNT(CASE WHEN activity.action = :examAction THEN 1 END) as exam_attempts",
+        "COUNT(DISTINCT activity.userId) as unique_users",
+        "COUNT(DISTINCT activity.examId) as unique_exams",
       ])
       .setParameters({
-        loginAction: 'login',
-        examAction: 'exam_start',
+        loginAction: "login",
+        examAction: "exam_start",
       })
-      .where('activity.ipAddress = :ipAddress', { ipAddress })
-      .andWhere('activity.createdAt >= :startDate', { startDate })
+      .where("activity.ipAddress = :ipAddress", { ipAddress })
+      .andWhere("activity.createdAt >= :startDate", { startDate })
       .getRawOne();
 
     return stats;
@@ -173,23 +179,25 @@ export class IpMonitoringService {
     startDate.setHours(startDate.getHours() - hours);
 
     const suspiciousIps = await this.ipActivityRepository
-      .createQueryBuilder('activity')
+      .createQueryBuilder("activity")
       .select([
-        'activity.ipAddress',
-        'COUNT(*) as total_requests',
-        'COUNT(CASE WHEN activity.isSuspicious = true THEN 1 END) as suspicious_requests',
-        'MAX(activity.createdAt) as last_activity',
+        "activity.ipAddress",
+        "COUNT(*) as total_requests",
+        "COUNT(CASE WHEN activity.isSuspicious = true THEN 1 END) as suspicious_requests",
+        "MAX(activity.createdAt) as last_activity",
       ])
-      .where('activity.createdAt >= :startDate', { startDate })
-      .groupBy('activity.ipAddress')
-      .having('COUNT(CASE WHEN activity.isSuspicious = true THEN 1 END) > 0')
-      .orderBy('suspicious_requests', 'DESC')
+      .where("activity.createdAt >= :startDate", { startDate })
+      .groupBy("activity.ipAddress")
+      .having("COUNT(CASE WHEN activity.isSuspicious = true THEN 1 END) > 0")
+      .orderBy("suspicious_requests", "DESC")
       .getRawMany();
 
     return suspiciousIps;
   }
 
-  private async detectSuspiciousActivity(activity: CreateIpActivityDto): Promise<boolean> {
+  private async detectSuspiciousActivity(
+    activity: CreateIpActivityDto,
+  ): Promise<boolean> {
     const suspiciousPatterns = [];
 
     // Check for rapid requests (more than 10 requests per minute)
@@ -201,59 +209,67 @@ export class IpMonitoringService {
     });
 
     if (recentRequests > 10) {
-      suspiciousPatterns.push('Rapid requests detected');
+      suspiciousPatterns.push("Rapid requests detected");
     }
 
     // Check for multiple failed login attempts
-    if (activity.action === 'login' && activity.statusCode === 401) {
+    if (activity.action === "login" && activity.statusCode === 401) {
       const failedLogins = await this.ipActivityRepository.count({
         where: {
           ipAddress: activity.ipAddress,
-          action: 'login',
+          action: "login",
           statusCode: 401,
           createdAt: MoreThan(new Date(Date.now() - 300000)), // Last 5 minutes
         },
       });
 
       if (failedLogins > 5) {
-        suspiciousPatterns.push('Multiple failed login attempts');
+        suspiciousPatterns.push("Multiple failed login attempts");
       }
     }
 
     // Check for unusual exam activity patterns
-    if (activity.action === 'exam_start') {
+    if (activity.action === "exam_start") {
       const examStarts = await this.ipActivityRepository.count({
         where: {
           ipAddress: activity.ipAddress,
-          action: 'exam_start',
+          action: "exam_start",
           createdAt: MoreThan(new Date(Date.now() - 3600000)), // Last hour
         },
       });
 
       if (examStarts > 3) {
-        suspiciousPatterns.push('Multiple exam starts from same IP');
+        suspiciousPatterns.push("Multiple exam starts from same IP");
       }
     }
 
     // Check for requests from different user agents (possible bot)
     const uniqueUserAgents = await this.ipActivityRepository
-      .createQueryBuilder('activity')
-      .select('COUNT(DISTINCT activity.userAgent)', 'count')
-      .where('activity.ipAddress = :ipAddress', { ipAddress: activity.ipAddress })
-      .andWhere('activity.createdAt >= :startDate', { 
-        startDate: new Date(Date.now() - 3600000) 
+      .createQueryBuilder("activity")
+      .select("COUNT(DISTINCT activity.userAgent)", "count")
+      .where("activity.ipAddress = :ipAddress", {
+        ipAddress: activity.ipAddress,
+      })
+      .andWhere("activity.createdAt >= :startDate", {
+        startDate: new Date(Date.now() - 3600000),
       })
       .getRawOne();
 
     if (parseInt(uniqueUserAgents.count) > 5) {
-      suspiciousPatterns.push('Multiple user agents from same IP');
+      suspiciousPatterns.push("Multiple user agents from same IP");
     }
 
     return suspiciousPatterns.length > 0;
   }
 
-  private async handleSuspiciousActivity(ipAddress: string, activity: CreateIpActivityDto): Promise<void> {
-    this.logger.warn(`Suspicious activity detected from IP: ${ipAddress}`, activity);
+  private async handleSuspiciousActivity(
+    ipAddress: string,
+    activity: CreateIpActivityDto,
+  ): Promise<void> {
+    this.logger.warn(
+      `Suspicious activity detected from IP: ${ipAddress}`,
+      activity,
+    );
 
     // Check if IP should be automatically blocked
     const violationCount = await this.ipActivityRepository.count({
@@ -267,8 +283,8 @@ export class IpMonitoringService {
     if (violationCount > 10) {
       await this.blockIp({
         ipAddress,
-        reason: 'Automatic block due to suspicious activity',
-        blockType: 'suspicious_activity',
+        reason: "Automatic block due to suspicious activity",
+        blockType: "suspicious_activity",
         metadata: { violationCount, lastActivity: activity },
       });
 
@@ -276,13 +292,15 @@ export class IpMonitoringService {
     }
   }
 
-  private async getGeolocationData(ipAddress: string): Promise<{ country: string; city: string; region: string }> {
+  private async getGeolocationData(
+    _ipAddress: string,
+  ): Promise<{ country: string; city: string; region: string }> {
     // Simplified geolocation - in production, use a proper service like MaxMind GeoIP2
     // For now, return placeholder data
     return {
-      country: 'Unknown',
-      city: 'Unknown',
-      region: 'Unknown',
+      country: "Unknown",
+      city: "Unknown",
+      region: "Unknown",
     };
   }
 
@@ -305,10 +323,9 @@ export class IpMonitoringService {
         isActive: true,
         expiresAt: LessThan(new Date()),
       },
-      { isActive: false }
+      { isActive: false },
     );
 
     this.logger.log(`Cleaned up ${result.affected} expired IP blocks`);
   }
 }
-

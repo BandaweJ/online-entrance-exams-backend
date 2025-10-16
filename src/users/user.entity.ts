@@ -5,17 +5,17 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToMany,
-} from 'typeorm';
-import { Student } from '../students/student.entity';
+} from "typeorm";
+import { Student } from "../students/student.entity";
 
 export enum UserRole {
-  ADMIN = 'admin',
-  STUDENT = 'student',
+  ADMIN = "admin",
+  STUDENT = "student",
 }
 
-@Entity('users')
+@Entity("users")
 export class User {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
   @Column({ unique: true })
@@ -31,7 +31,7 @@ export class User {
   lastName: string;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: UserRole,
     default: UserRole.ADMIN,
   })

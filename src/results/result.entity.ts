@@ -6,74 +6,74 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
-} from 'typeorm';
-import { Student } from '../students/student.entity';
-import { Exam } from '../exams/exam.entity';
-import { ExamAttempt } from '../attempts/exam-attempt.entity';
+} from "typeorm";
+import { Student } from "../students/student.entity";
+import { Exam } from "../exams/exam.entity";
+import { ExamAttempt } from "../attempts/exam-attempt.entity";
 
 export enum Grade {
-  A_PLUS = 'A+',
-  A = 'A',
-  B_PLUS = 'B+',
-  B = 'B',
-  C_PLUS = 'C+',
-  C = 'C',
-  D = 'D',
-  F = 'F',
+  A_PLUS = "A+",
+  A = "A",
+  B_PLUS = "B+",
+  B = "B",
+  C_PLUS = "C+",
+  C = "C",
+  D = "D",
+  F = "F",
 }
 
-@Entity('results')
+@Entity("results")
 export class Result {
-  @PrimaryGeneratedColumn('uuid')
+  @PrimaryGeneratedColumn("uuid")
   id: string;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2 })
+  @Column({ type: "decimal", precision: 5, scale: 2 })
   score: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2 })
+  @Column({ type: "decimal", precision: 5, scale: 2 })
   totalMarks: number;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2 })
+  @Column({ type: "decimal", precision: 5, scale: 2 })
   percentage: number;
 
   @Column({
-    type: 'enum',
+    type: "enum",
     enum: Grade,
     nullable: true,
   })
   grade: Grade;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   rank: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   totalStudents: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   questionsAnswered: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   totalQuestions: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   correctAnswers: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   wrongAnswers: number;
 
-  @Column({ type: 'int' })
+  @Column({ type: "int" })
   timeSpent: number; // in seconds
 
   @Column({ default: false })
   isPassed: boolean;
 
-  @Column({ type: 'decimal', precision: 5, scale: 2, nullable: true })
+  @Column({ type: "decimal", precision: 5, scale: 2, nullable: true })
   passPercentage: number;
 
   @Column({ default: false })
   isPublished: boolean;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: "timestamp", nullable: true })
   publishedAt: Date;
 
   @CreateDateColumn()
@@ -82,22 +82,24 @@ export class Result {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @ManyToOne(() => Student, (student) => student.id, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'studentId' })
+  @ManyToOne(() => Student, (student) => student.id, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "studentId" })
   student: Student;
 
   @Column()
   studentId: string;
 
-  @ManyToOne(() => Exam, (exam) => exam.id, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'examId' })
+  @ManyToOne(() => Exam, (exam) => exam.id, { onDelete: "CASCADE" })
+  @JoinColumn({ name: "examId" })
   exam: Exam;
 
   @Column()
   examId: string;
 
-  @ManyToOne(() => ExamAttempt, (attempt) => attempt.results, { onDelete: 'CASCADE' })
-  @JoinColumn({ name: 'attemptId' })
+  @ManyToOne(() => ExamAttempt, (attempt) => attempt.results, {
+    onDelete: "CASCADE",
+  })
+  @JoinColumn({ name: "attemptId" })
   attempt: ExamAttempt;
 
   @Column()
@@ -113,7 +115,7 @@ export class Result {
     const hours = Math.floor(this.timeSpent / 3600);
     const minutes = Math.floor((this.timeSpent % 3600) / 60);
     const seconds = this.timeSpent % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
   }
 
   // Virtual field for accuracy percentage

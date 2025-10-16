@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Between, MoreThanOrEqual, LessThanOrEqual } from 'typeorm';
-import { Result, Grade } from '../results/result.entity';
-import { ExamAttempt, AttemptStatus } from '../attempts/exam-attempt.entity';
-import { Student } from '../students/student.entity';
-import { Exam } from '../exams/exam.entity';
-import { Answer } from '../answers/answer.entity';
+import { Injectable } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, Between } from "typeorm";
+import { Result, Grade } from "../results/result.entity";
+import { ExamAttempt } from "../attempts/exam-attempt.entity";
+import { Student } from "../students/student.entity";
+import { Exam } from "../exams/exam.entity";
+import { Answer } from "../answers/answer.entity";
 
 export interface PerformanceTrends {
   period: string;
@@ -23,7 +23,7 @@ export interface StudentPerformanceMetrics {
   averageScore: number;
   averagePercentage: number;
   bestGrade: Grade;
-  improvementTrend: 'improving' | 'declining' | 'stable';
+  improvementTrend: "improving" | "declining" | "stable";
   lastExamDate: Date;
   totalTimeSpent: number;
 }
@@ -88,7 +88,7 @@ export class AnalyticsService {
   ) {}
 
   async getPerformanceTrends(
-    period: 'week' | 'month' | 'quarter' | 'year' = 'month',
+    period: "week" | "month" | "quarter" | "year" = "month",
     examId?: string,
   ): Promise<PerformanceTrends[]> {
     const endDate = new Date();
@@ -104,8 +104,8 @@ export class AnalyticsService {
 
     const results = await this.resultRepository.find({
       where: whereCondition,
-      relations: ['exam', 'attempt'],
-      order: { createdAt: 'ASC' },
+      relations: ["exam", "attempt"],
+      order: { createdAt: "ASC" },
     });
 
     return this.calculatePerformanceTrends(results, period);
@@ -113,17 +113,17 @@ export class AnalyticsService {
 
   async getStudentPerformanceMetrics(
     limit: number = 50,
-    sortBy: 'averageScore' | 'improvement' | 'totalExams' = 'averageScore',
+    sortBy: "averageScore" | "improvement" | "totalExams" = "averageScore",
   ): Promise<StudentPerformanceMetrics[]> {
     const students = await this.studentRepository.find({
-      relations: ['examAttempts', 'examAttempts.results'],
+      relations: ["examAttempts", "examAttempts.results"],
       take: limit,
     });
 
-    const metrics = students.map(student => {
+    const metrics = students.map((student) => {
       const results = student.examAttempts
-        .flatMap(attempt => attempt.results)
-        .filter(result => result.isPublished);
+        .flatMap((attempt) => attempt.results)
+        .filter((result) => result.isPublished);
 
       if (results.length === 0) {
         return {
@@ -133,20 +133,23 @@ export class AnalyticsService {
           averageScore: 0,
           averagePercentage: 0,
           bestGrade: null,
-          improvementTrend: 'stable' as const,
+          improvementTrend: "stable" as const,
           lastExamDate: null,
           totalTimeSpent: 0,
         };
       }
 
-      const scores = results.map(r => r.percentage);
-      const averageScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
-      const averagePercentage = results.reduce((sum, r) => sum + r.percentage, 0) / results.length;
-      
+      const scores = results.map((r) => r.percentage);
+      const averageScore =
+        scores.reduce((sum, score) => sum + score, 0) / scores.length;
+      const averagePercentage =
+        results.reduce((sum, r) => sum + r.percentage, 0) / results.length;
+
       const bestGrade = this.getBestGrade(results);
       const improvementTrend = this.calculateImprovementTrend(results);
-      const lastExamDate = results.sort((a, b) => 
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      const lastExamDate = results.sort(
+        (a, b) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       )[0]?.createdAt;
       const totalTimeSpent = results.reduce((sum, r) => sum + r.timeSpent, 0);
 
@@ -169,15 +172,15 @@ export class AnalyticsService {
   async getExamAnalytics(examId: string): Promise<ExamAnalytics> {
     const exam = await this.examRepository.findOne({
       where: { id: examId },
-      relations: ['questions', 'attempts', 'attempts.results'],
+      relations: ["questions", "attempts", "attempts.results"],
     });
 
     if (!exam) {
-      throw new Error('Exam not found');
+      throw new Error("Exam not found");
     }
 
-    const results = exam.attempts.flatMap(attempt => attempt.results);
-    const publishedResults = results.filter(r => r.isPublished);
+    const results = exam.attempts.flatMap((attempt) => attempt.results);
+    const publishedResults = results.filter((r) => r.isPublished);
 
     if (publishedResults.length === 0) {
       return {
@@ -190,28 +193,36 @@ export class AnalyticsService {
         completionRate: 0,
         averageTimeSpent: 0,
         gradeDistribution: {},
-        difficultyAnalysis: { easyQuestions: 0, mediumQuestions: 0, hardQuestions: 0 },
+        difficultyAnalysis: {
+          easyQuestions: 0,
+          mediumQuestions: 0,
+          hardQuestions: 0,
+        },
         questionPerformance: [],
       };
     }
 
-    const scores = publishedResults.map(r => r.score);
-    const percentages = publishedResults.map(r => r.percentage);
-    const passedCount = publishedResults.filter(r => r.isPassed).length;
+    const scores = publishedResults.map((r) => r.score);
+    const percentages = publishedResults.map((r) => r.percentage);
+    const passedCount = publishedResults.filter((r) => r.isPassed).length;
     const totalAttempts = exam.attempts.length;
     const completedAttempts = publishedResults.length;
 
-    const averageScore = scores.reduce((sum, score) => sum + score, 0) / scores.length;
-    const averagePercentage = percentages.reduce((sum, p) => sum + p, 0) / percentages.length;
+    const averageScore =
+      scores.reduce((sum, score) => sum + score, 0) / scores.length;
+    const averagePercentage =
+      percentages.reduce((sum, p) => sum + p, 0) / percentages.length;
     const passRate = (passedCount / publishedResults.length) * 100;
     const completionRate = (completedAttempts / totalAttempts) * 100;
-    const averageTimeSpent = publishedResults.reduce((sum, r) => sum + r.timeSpent, 0) / publishedResults.length;
+    const averageTimeSpent =
+      publishedResults.reduce((sum, r) => sum + r.timeSpent, 0) /
+      publishedResults.length;
 
     const gradeDistribution = this.calculateGradeDistribution(publishedResults);
     const difficultyAnalysis = {
       easyQuestions: 0,
       mediumQuestions: 0,
-      hardQuestions: 0
+      hardQuestions: 0,
     }; // TODO: Implement when questions relationship is available
     const questionPerformance = await this.analyzeQuestionPerformance(examId);
 
@@ -231,7 +242,7 @@ export class AnalyticsService {
   }
 
   async getTimeBasedAnalytics(
-    period: 'day' | 'week' | 'month' = 'week',
+    period: "day" | "week" | "month" = "week",
     examId?: string,
   ): Promise<TimeBasedAnalytics> {
     const endDate = new Date();
@@ -247,8 +258,8 @@ export class AnalyticsService {
 
     const results = await this.resultRepository.find({
       where: whereCondition,
-      relations: ['attempt'],
-      order: { createdAt: 'ASC' },
+      relations: ["attempt"],
+      order: { createdAt: "ASC" },
     });
 
     return {
@@ -263,14 +274,19 @@ export class AnalyticsService {
     // This would require a subject field in questions or exam sections
     // For now, we'll return a placeholder implementation
     const results = await this.resultRepository.find({
-      relations: ['exam', 'attempt', 'attempt.answers', 'attempt.answers.question'],
+      relations: [
+        "exam",
+        "attempt",
+        "attempt.answers",
+        "attempt.answers.question",
+      ],
     });
 
     // Group by exam title as a proxy for subject
     const subjectMap = new Map<string, any>();
 
-    results.forEach(result => {
-      const subject = result.exam?.title || 'Unknown';
+    results.forEach((result) => {
+      const subject = result.exam?.title || "Unknown";
       if (!subjectMap.has(subject)) {
         subjectMap.set(subject, {
           subject,
@@ -284,9 +300,9 @@ export class AnalyticsService {
 
       const subjectData = subjectMap.get(subject);
       subjectData.totalAttempts++;
-      
+
       if (result.attempt?.answers) {
-        result.attempt.answers.forEach(answer => {
+        result.attempt.answers.forEach((answer) => {
           if (answer.question) {
             subjectData.questions.add(answer.question.id);
             if (answer.isCorrect) {
@@ -297,40 +313,53 @@ export class AnalyticsService {
       }
     });
 
-    return Array.from(subjectMap.values()).map(data => ({
+    return Array.from(subjectMap.values()).map((data) => ({
       subject: data.subject,
       totalQuestions: data.questions.size,
-      averageAccuracy: data.totalAttempts > 0 ? (data.correctAnswers / (data.totalAttempts * data.questions.size)) * 100 : 0,
+      averageAccuracy:
+        data.totalAttempts > 0
+          ? (data.correctAnswers / (data.totalAttempts * data.questions.size)) *
+            100
+          : 0,
       totalAttempts: data.totalAttempts,
       difficultyBreakdown: data.difficultyBreakdown,
     }));
   }
 
   async exportAnalyticsData(
-    type: 'performance' | 'students' | 'exams' | 'time-based',
-    format: 'csv' | 'json' = 'json',
+    type: "performance" | "students" | "exams" | "time-based",
+    format: "csv" | "json" = "json",
     filters?: any,
   ): Promise<any> {
     let data: any;
 
     switch (type) {
-      case 'performance':
-        data = await this.getPerformanceTrends(filters?.period, filters?.examId);
+      case "performance":
+        data = await this.getPerformanceTrends(
+          filters?.period,
+          filters?.examId,
+        );
         break;
-      case 'students':
-        data = await this.getStudentPerformanceMetrics(filters?.limit, filters?.sortBy);
+      case "students":
+        data = await this.getStudentPerformanceMetrics(
+          filters?.limit,
+          filters?.sortBy,
+        );
         break;
-      case 'exams':
+      case "exams":
         data = await this.getExamAnalytics(filters?.examId);
         break;
-      case 'time-based':
-        data = await this.getTimeBasedAnalytics(filters?.period, filters?.examId);
+      case "time-based":
+        data = await this.getTimeBasedAnalytics(
+          filters?.period,
+          filters?.examId,
+        );
         break;
       default:
-        throw new Error('Invalid export type');
+        throw new Error("Invalid export type");
     }
 
-    if (format === 'csv') {
+    if (format === "csv") {
       return this.convertToCSV(data);
     }
 
@@ -339,45 +368,50 @@ export class AnalyticsService {
 
   private getStartDateForPeriod(period: string, endDate: Date): Date {
     const startDate = new Date(endDate);
-    
+
     switch (period) {
-      case 'week':
+      case "week":
         startDate.setDate(startDate.getDate() - 7);
         break;
-      case 'month':
+      case "month":
         startDate.setMonth(startDate.getMonth() - 1);
         break;
-      case 'quarter':
+      case "quarter":
         startDate.setMonth(startDate.getMonth() - 3);
         break;
-      case 'year':
+      case "year":
         startDate.setFullYear(startDate.getFullYear() - 1);
         break;
-      case 'day':
+      case "day":
         startDate.setDate(startDate.getDate() - 1);
         break;
     }
-    
+
     return startDate;
   }
 
-  private calculatePerformanceTrends(results: Result[], period: string): PerformanceTrends[] {
+  private calculatePerformanceTrends(
+    results: Result[],
+    period: string,
+  ): PerformanceTrends[] {
     const trends: PerformanceTrends[] = [];
     const groupedResults = this.groupResultsByPeriod(results, period);
 
     Object.entries(groupedResults).forEach(([periodKey, periodResults]) => {
       if (periodResults.length === 0) return;
 
-      const scores = periodResults.map(r => r.score);
-      const percentages = periodResults.map(r => r.percentage);
-      const passedCount = periodResults.filter(r => r.isPassed).length;
+      const scores = periodResults.map((r) => r.score);
+      const percentages = periodResults.map((r) => r.percentage);
+      const passedCount = periodResults.filter((r) => r.isPassed).length;
       const totalAttempts = periodResults.length;
-      const completedCount = periodResults.filter(r => r.isPublished).length;
+      const completedCount = periodResults.filter((r) => r.isPublished).length;
 
       trends.push({
         period: periodKey,
-        averageScore: scores.reduce((sum, score) => sum + score, 0) / scores.length,
-        averagePercentage: percentages.reduce((sum, p) => sum + p, 0) / percentages.length,
+        averageScore:
+          scores.reduce((sum, score) => sum + score, 0) / scores.length,
+        averagePercentage:
+          percentages.reduce((sum, p) => sum + p, 0) / percentages.length,
         passRate: (passedCount / periodResults.length) * 100,
         totalAttempts,
         completionRate: (completedCount / totalAttempts) * 100,
@@ -387,29 +421,32 @@ export class AnalyticsService {
     return trends.sort((a, b) => a.period.localeCompare(b.period));
   }
 
-  private groupResultsByPeriod(results: Result[], period: string): Record<string, Result[]> {
+  private groupResultsByPeriod(
+    results: Result[],
+    period: string,
+  ): Record<string, Result[]> {
     const grouped: Record<string, Result[]> = {};
 
-    results.forEach(result => {
+    results.forEach((result) => {
       const date = new Date(result.createdAt);
       let key: string;
 
       switch (period) {
-        case 'week':
+        case "week":
           key = this.getWeekKey(date);
           break;
-        case 'month':
-          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        case "month":
+          key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
           break;
-        case 'quarter':
+        case "quarter":
           const quarter = Math.floor(date.getMonth() / 3) + 1;
           key = `${date.getFullYear()}-Q${quarter}`;
           break;
-        case 'year':
+        case "year":
           key = String(date.getFullYear());
           break;
         default:
-          key = date.toISOString().split('T')[0];
+          key = date.toISOString().split("T")[0];
       }
 
       if (!grouped[key]) {
@@ -424,25 +461,32 @@ export class AnalyticsService {
   private getWeekKey(date: Date): string {
     const year = date.getFullYear();
     const week = this.getWeekNumber(date);
-    return `${year}-W${String(week).padStart(2, '0')}`;
+    return `${year}-W${String(week).padStart(2, "0")}`;
   }
 
   private getWeekNumber(date: Date): number {
     const firstDayOfYear = new Date(date.getFullYear(), 0, 1);
-    const pastDaysOfYear = (date.getTime() - firstDayOfYear.getTime()) / 86400000;
+    const pastDaysOfYear =
+      (date.getTime() - firstDayOfYear.getTime()) / 86400000;
     return Math.ceil((pastDaysOfYear + firstDayOfYear.getDay() + 1) / 7);
   }
 
   private getBestGrade(results: Result[]): Grade | null {
     if (results.length === 0) return null;
-    
+
     const gradeOrder = [
-      Grade.A_PLUS, Grade.A, Grade.B_PLUS, Grade.B,
-      Grade.C_PLUS, Grade.C, Grade.D, Grade.F
+      Grade.A_PLUS,
+      Grade.A,
+      Grade.B_PLUS,
+      Grade.B,
+      Grade.C_PLUS,
+      Grade.C,
+      Grade.D,
+      Grade.F,
     ];
 
     for (const grade of gradeOrder) {
-      if (results.some(r => r.grade === grade)) {
+      if (results.some((r) => r.grade === grade)) {
         return grade;
       }
     }
@@ -450,53 +494,75 @@ export class AnalyticsService {
     return null;
   }
 
-  private calculateImprovementTrend(results: Result[]): 'improving' | 'declining' | 'stable' {
-    if (results.length < 2) return 'stable';
+  private calculateImprovementTrend(
+    results: Result[],
+  ): "improving" | "declining" | "stable" {
+    if (results.length < 2) return "stable";
 
-    const sortedResults = results.sort((a, b) => 
-      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    const sortedResults = results.sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
     );
 
-    const firstHalf = sortedResults.slice(0, Math.floor(sortedResults.length / 2));
-    const secondHalf = sortedResults.slice(Math.floor(sortedResults.length / 2));
+    const firstHalf = sortedResults.slice(
+      0,
+      Math.floor(sortedResults.length / 2),
+    );
+    const secondHalf = sortedResults.slice(
+      Math.floor(sortedResults.length / 2),
+    );
 
-    const firstHalfAvg = firstHalf.reduce((sum, r) => sum + r.percentage, 0) / firstHalf.length;
-    const secondHalfAvg = secondHalf.reduce((sum, r) => sum + r.percentage, 0) / secondHalf.length;
+    const firstHalfAvg =
+      firstHalf.reduce((sum, r) => sum + r.percentage, 0) / firstHalf.length;
+    const secondHalfAvg =
+      secondHalf.reduce((sum, r) => sum + r.percentage, 0) / secondHalf.length;
 
     const improvement = secondHalfAvg - firstHalfAvg;
-    
-    if (improvement > 5) return 'improving';
-    if (improvement < -5) return 'declining';
-    return 'stable';
+
+    if (improvement > 5) return "improving";
+    if (improvement < -5) return "declining";
+    return "stable";
   }
 
-  private sortMetrics(metrics: StudentPerformanceMetrics[], sortBy: string): StudentPerformanceMetrics[] {
+  private sortMetrics(
+    metrics: StudentPerformanceMetrics[],
+    sortBy: string,
+  ): StudentPerformanceMetrics[] {
     return metrics.sort((a, b) => {
       switch (sortBy) {
-        case 'averageScore':
+        case "averageScore":
           return b.averageScore - a.averageScore;
-        case 'totalExams':
+        case "totalExams":
           return b.totalExams - a.totalExams;
-        case 'improvement':
+        case "improvement":
           const improvementOrder = { improving: 2, stable: 1, declining: 0 };
-          return improvementOrder[b.improvementTrend] - improvementOrder[a.improvementTrend];
+          return (
+            improvementOrder[b.improvementTrend] -
+            improvementOrder[a.improvementTrend]
+          );
         default:
           return 0;
       }
     });
   }
 
-  private calculateGradeDistribution(results: Result[]): Record<string, number> {
+  private calculateGradeDistribution(
+    results: Result[],
+  ): Record<string, number> {
     const distribution: Record<string, number> = {};
-    
-    Object.values(Grade).forEach(grade => {
-      distribution[grade] = results.filter(r => r.grade === grade).length;
+
+    Object.values(Grade).forEach((grade) => {
+      distribution[grade] = results.filter((r) => r.grade === grade).length;
     });
 
     return distribution;
   }
 
-  private analyzeQuestionDifficulty(questions: any[]): { easyQuestions: number; mediumQuestions: number; hardQuestions: number } {
+  private analyzeQuestionDifficulty(questions: any[]): {
+    easyQuestions: number;
+    mediumQuestions: number;
+    hardQuestions: number;
+  } {
     // This is a simplified implementation - in a real system, you'd have difficulty levels
     return {
       easyQuestions: Math.floor(questions.length * 0.3),
@@ -508,12 +574,12 @@ export class AnalyticsService {
   private async analyzeQuestionPerformance(examId: string): Promise<any[]> {
     const answers = await this.answerRepository.find({
       where: { attempt: { examId } },
-      relations: ['question', 'attempt'],
+      relations: ["question", "attempt"],
     });
 
     const questionMap = new Map<string, any>();
 
-    answers.forEach(answer => {
+    answers.forEach((answer) => {
       if (!answer.question) return;
 
       const questionId = answer.question.id;
@@ -530,23 +596,30 @@ export class AnalyticsService {
       const questionData = questionMap.get(questionId);
       questionData.totalAttempts++;
       questionData.totalTimeSpent += 0; // timeSpent not available on Answer entity
-      
+
       if (answer.isCorrect) {
         questionData.correctAnswers++;
       }
     });
 
-    return Array.from(questionMap.values()).map(data => ({
+    return Array.from(questionMap.values()).map((data) => ({
       ...data,
-      accuracyRate: data.totalAttempts > 0 ? (data.correctAnswers / data.totalAttempts) * 100 : 0,
-      averageTimeSpent: data.totalAttempts > 0 ? data.totalTimeSpent / data.totalAttempts : 0,
+      accuracyRate:
+        data.totalAttempts > 0
+          ? (data.correctAnswers / data.totalAttempts) * 100
+          : 0,
+      averageTimeSpent:
+        data.totalAttempts > 0 ? data.totalTimeSpent / data.totalAttempts : 0,
     }));
   }
 
-  private calculateHourlyAnalytics(results: Result[]): Array<{ hour: number; attempts: number; averageScore: number }> {
-    const hourlyData: Record<number, { attempts: number; totalScore: number }> = {};
+  private calculateHourlyAnalytics(
+    results: Result[],
+  ): Array<{ hour: number; attempts: number; averageScore: number }> {
+    const hourlyData: Record<number, { attempts: number; totalScore: number }> =
+      {};
 
-    results.forEach(result => {
+    results.forEach((result) => {
       const hour = new Date(result.createdAt).getHours();
       if (!hourlyData[hour]) {
         hourlyData[hour] = { attempts: 0, totalScore: 0 };
@@ -562,11 +635,14 @@ export class AnalyticsService {
     }));
   }
 
-  private calculateDailyAnalytics(results: Result[]): Array<{ date: string; attempts: number; averageScore: number }> {
-    const dailyData: Record<string, { attempts: number; totalScore: number }> = {};
+  private calculateDailyAnalytics(
+    results: Result[],
+  ): Array<{ date: string; attempts: number; averageScore: number }> {
+    const dailyData: Record<string, { attempts: number; totalScore: number }> =
+      {};
 
-    results.forEach(result => {
-      const date = result.createdAt.toISOString().split('T')[0];
+    results.forEach((result) => {
+      const date = result.createdAt.toISOString().split("T")[0];
       if (!dailyData[date]) {
         dailyData[date] = { attempts: 0, totalScore: 0 };
       }
@@ -581,10 +657,13 @@ export class AnalyticsService {
     }));
   }
 
-  private calculateWeeklyAnalytics(results: Result[]): Array<{ week: string; attempts: number; averageScore: number }> {
-    const weeklyData: Record<string, { attempts: number; totalScore: number }> = {};
+  private calculateWeeklyAnalytics(
+    results: Result[],
+  ): Array<{ week: string; attempts: number; averageScore: number }> {
+    const weeklyData: Record<string, { attempts: number; totalScore: number }> =
+      {};
 
-    results.forEach(result => {
+    results.forEach((result) => {
       const weekKey = this.getWeekKey(new Date(result.createdAt));
       if (!weeklyData[weekKey]) {
         weeklyData[weekKey] = { attempts: 0, totalScore: 0 };
@@ -600,11 +679,16 @@ export class AnalyticsService {
     }));
   }
 
-  private calculateMonthlyAnalytics(results: Result[]): Array<{ month: string; attempts: number; averageScore: number }> {
-    const monthlyData: Record<string, { attempts: number; totalScore: number }> = {};
+  private calculateMonthlyAnalytics(
+    results: Result[],
+  ): Array<{ month: string; attempts: number; averageScore: number }> {
+    const monthlyData: Record<
+      string,
+      { attempts: number; totalScore: number }
+    > = {};
 
-    results.forEach(result => {
-      const monthKey = `${result.createdAt.getFullYear()}-${String(result.createdAt.getMonth() + 1).padStart(2, '0')}`;
+    results.forEach((result) => {
+      const monthKey = `${result.createdAt.getFullYear()}-${String(result.createdAt.getMonth() + 1).padStart(2, "0")}`;
       if (!monthlyData[monthKey]) {
         monthlyData[monthKey] = { attempts: 0, totalScore: 0 };
       }
@@ -621,14 +705,16 @@ export class AnalyticsService {
 
   private convertToCSV(data: any): string {
     if (!Array.isArray(data) || data.length === 0) {
-      return '';
+      return "";
     }
 
     const headers = Object.keys(data[0]);
     const csvContent = [
-      headers.join(','),
-      ...data.map(row => headers.map(header => `"${row[header] || ''}"`).join(','))
-    ].join('\n');
+      headers.join(","),
+      ...data.map((row) =>
+        headers.map((header) => `"${row[header] || ""}"`).join(","),
+      ),
+    ].join("\n");
 
     return csvContent;
   }
