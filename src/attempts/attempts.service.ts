@@ -2,6 +2,8 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, Like } from "typeorm";
@@ -26,6 +28,7 @@ export class AttemptsService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private examScoringService: ExamScoringService,
+    @Inject(forwardRef(() => ResultsService))
     private resultsService: ResultsService,
   ) {}
 

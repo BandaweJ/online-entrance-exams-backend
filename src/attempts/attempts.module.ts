@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ExamAttempt } from "./exam-attempt.entity";
 import { Student } from "../students/student.entity";
@@ -13,7 +13,7 @@ import { ResultsModule } from "../results/results.module";
   imports: [
     TypeOrmModule.forFeature([ExamAttempt, Student, Exam, User]),
     ScoringModule,
-    ResultsModule,
+    forwardRef(() => ResultsModule),
   ],
   controllers: [AttemptsController],
   providers: [AttemptsService],

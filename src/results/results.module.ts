@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { Result } from "./result.entity";
 import { ExamAttempt } from "../attempts/exam-attempt.entity";
