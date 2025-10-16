@@ -121,6 +121,13 @@ export class AttemptsService {
     });
   }
 
+  async findAllForAdmin(): Promise<ExamAttempt[]> {
+    return this.attemptRepository.find({
+      relations: ["exam", "student"],
+      order: { createdAt: "DESC" },
+    });
+  }
+
   async findOne(id: string, studentId: string): Promise<ExamAttempt> {
     const attempt = await this.attemptRepository.findOne({
       where: { id, studentId },

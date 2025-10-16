@@ -10,6 +10,9 @@ import {
 } from "@nestjs/common";
 import { AttemptsService } from "./attempts.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
+import { RolesGuard } from "../auth/roles.guard";
+import { Roles } from "../auth/roles.decorator";
+import { UserRole } from "../users/user.entity";
 import { CreateAttemptDto } from "./dto/create-attempt.dto";
 import { UpdateAttemptDto } from "./dto/update-attempt.dto";
 
@@ -26,6 +29,13 @@ export class AttemptsController {
   @Get()
   findAll(@Request() req) {
     return this.attemptsService.findAll(req.user.id);
+  }
+
+  @Get("admin")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  findAllForAdmin() {
+    return this.attemptsService.findAllForAdmin();
   }
 
   @Get("stats")

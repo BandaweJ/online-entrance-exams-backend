@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository } from "typeorm";
+import { Repository, MoreThan } from "typeorm";
 import { Result, Grade } from "./result.entity";
 import { ExamAttempt, AttemptStatus } from "../attempts/exam-attempt.entity";
 import { Answer } from "../answers/answer.entity";
@@ -146,7 +146,7 @@ export class ResultsService {
     
     // Debug: Check for submitted attempts that should have results
     const submittedAttempts = await this.attemptRepository.find({
-      where: { status: 'submitted' },
+      where: { status: AttemptStatus.SUBMITTED },
       relations: ['student', 'exam']
     });
     console.log('Found submitted attempts:', submittedAttempts.length);
@@ -204,6 +204,13 @@ export class ResultsService {
     return this.resultRepository.findOne({
       where: { attemptId },
       relations: ["student", "exam", "attempt"],
+    });
+  }
+
+  async findAttemptById(attemptId: string): Promise<ExamAttempt | null> {
+    return this.attemptRepository.findOne({
+      where: { id: attemptId },
+      relations: ["student", "exam"],
     });
   }
 
@@ -368,7 +375,7 @@ export class ResultsService {
 
   private async calculateRank(examId: string, score: number): Promise<number> {
     const betterResults = await this.resultRepository.count({
-      where: { examId, score: { $gt: score } as any },
+      where: { examId, score: MoreThan(score) },
     });
     return betterResults + 1;
   }

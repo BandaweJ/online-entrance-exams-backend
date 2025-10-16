@@ -7,6 +7,7 @@ import {
   UseGuards,
   Request,
   Query,
+  NotFoundException,
 } from "@nestjs/common";
 import { ResultsService } from "./results.service";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
@@ -21,8 +22,13 @@ export class ResultsController {
 
   @Post("generate/:attemptId")
   @Roles(UserRole.ADMIN)
-  generateResult(@Param("attemptId") attemptId: string, @Request() req) {
-    return this.resultsService.generateResult(attemptId, req.user.id);
+  async generateResult(@Param("attemptId") attemptId: string, @Request() req) {
+    // First get the attempt to find the student ID
+    const attempt = await this.resultsService.findAttemptById(attemptId);
+    if (!attempt) {
+      throw new NotFoundException("Attempt not found");
+    }
+    return this.resultsService.generateResult(attemptId, attempt.studentId);
   }
 
   @Get()
