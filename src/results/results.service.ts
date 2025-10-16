@@ -136,11 +136,14 @@ export class ResultsService {
     if (studentId) whereCondition.studentId = studentId;
     if (examId) whereCondition.examId = examId;
 
-    return this.resultRepository.find({
+    console.log('Finding results with condition:', whereCondition);
+    const results = await this.resultRepository.find({
       where: whereCondition,
       relations: ["student", "exam", "attempt"],
       order: { createdAt: "DESC" },
     });
+    console.log('Found results:', results.length);
+    return results;
   }
 
   async findOne(id: string): Promise<Result> {
