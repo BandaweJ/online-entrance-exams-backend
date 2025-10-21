@@ -4,50 +4,9 @@ import { AppModule } from "./app.module";
 import { UsersService } from "./users/users.service";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { User } from "./users/user.entity";
-import { AppDataSource } from "./config/data-source";
 import * as bcrypt from "bcrypt";
 
 async function bootstrap() {
-  // Ensure database columns exist before starting the application
-  try {
-    console.log("Checking database schema...");
-    await AppDataSource.initialize();
-    
-    // Check if instructions columns exist, if not add them
-    const queryRunner = AppDataSource.createQueryRunner();
-    await queryRunner.connect();
-    
-    // Check if exams.instructions exists
-    const examsColumns = await queryRunner.query(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'exams' AND column_name = 'instructions'
-    `);
-    
-    if (examsColumns.length === 0) {
-      console.log("Adding instructions column to exams table...");
-      await queryRunner.query(`ALTER TABLE "exams" ADD "instructions" text`);
-    }
-    
-    // Check if sections.instructions exists
-    const sectionsColumns = await queryRunner.query(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'sections' AND column_name = 'instructions'
-    `);
-    
-    if (sectionsColumns.length === 0) {
-      console.log("Adding instructions column to sections table...");
-      await queryRunner.query(`ALTER TABLE "sections" ADD "instructions" text`);
-    }
-    
-    await queryRunner.release();
-    console.log("Database schema check completed successfully");
-  } catch (error) {
-    console.error("Error checking database schema:", error);
-    process.exit(1);
-  }
-
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS with production configuration

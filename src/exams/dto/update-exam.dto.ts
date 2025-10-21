@@ -16,9 +16,9 @@ export class UpdateExamDto {
   @IsString()
   description?: string;
 
-  @IsOptional()
-  @IsString()
-  instructions?: string;
+  // @IsOptional()
+  // @IsString()
+  // instructions?: string;
 
   @IsOptional()
   @IsNumber()
