@@ -4,9 +4,21 @@ import { AppModule } from "./app.module";
 import { UsersService } from "./users/users.service";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { User } from "./users/user.entity";
+import { AppDataSource } from "./config/data-source";
 import * as bcrypt from "bcrypt";
 
 async function bootstrap() {
+  // Run migrations before starting the application
+  try {
+    console.log("Running database migrations...");
+    await AppDataSource.initialize();
+    await AppDataSource.runMigrations();
+    console.log("Database migrations completed successfully");
+  } catch (error) {
+    console.error("Error running migrations:", error);
+    process.exit(1);
+  }
+
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS with production configuration
