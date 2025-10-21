@@ -15,9 +15,9 @@ export class CreateExamDto {
   @IsString()
   description?: string;
 
-  // @IsOptional()
-  // @IsString()
-  // instructions?: string;
+  @IsOptional()
+  @IsString()
+  instructions?: string;
 
   @IsNumber()
   @Min(2020)

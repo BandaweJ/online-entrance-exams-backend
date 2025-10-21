@@ -29,8 +29,8 @@ export class Exam {
   @Column({ nullable: true })
   description: string;
 
-  // @Column({ type: "text", nullable: true })
-  // instructions: string;
+  @Column({ type: "text", nullable: true })
+  instructions: string;
 
   @Column()
   year: number;
