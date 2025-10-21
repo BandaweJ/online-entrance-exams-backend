@@ -10,6 +10,10 @@ export class UpdateSectionDto {
   description?: string;
 
   @IsOptional()
+  @IsString()
+  instructions?: string;
+
+  @IsOptional()
   @IsNumber()
   @Min(1)
   order?: number;

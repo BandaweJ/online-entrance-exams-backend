@@ -8,6 +8,10 @@ export class CreateSectionDto {
   @IsString()
   description?: string;
 
+  @IsOptional()
+  @IsString()
+  instructions?: string;
+
   @IsNumber()
   @Min(1)
   order: number;

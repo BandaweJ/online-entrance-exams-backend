@@ -30,6 +30,6 @@ export const AppDataSource = new DataSource({
     Result,
   ],
   migrations: ["src/migrations/*.ts"],
-  synchronize: false,
+  synchronize: true,
   logging: process.env.NODE_ENV === "development",
 });

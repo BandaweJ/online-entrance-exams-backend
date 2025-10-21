@@ -17,6 +17,10 @@ export class UpdateExamDto {
   description?: string;
 
   @IsOptional()
+  @IsString()
+  instructions?: string;
+
+  @IsOptional()
   @IsNumber()
   @Min(2020)
   @Max(2030)

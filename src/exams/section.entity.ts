@@ -22,6 +22,9 @@ export class Section {
   @Column({ nullable: true })
   description: string;
 
+  @Column({ type: "text", nullable: true })
+  instructions: string;
+
   @Column({ type: "int" })
   order: number;
 
