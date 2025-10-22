@@ -66,6 +66,15 @@ export class ExamAttempt {
   @Column({ default: false })
   isGraded: boolean;
 
+  @Column({ type: "int", default: 0 })
+  cheatingWarnings: number;
+
+  @Column({ type: "int", default: 3 })
+  maxCheatingWarnings: number;
+
+  @Column({ type: "json", nullable: true })
+  cheatingViolations: any[]; // Store details of each violation
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -116,5 +125,15 @@ export class ExamAttempt {
     const minutes = Math.floor((this.timeSpent % 3600) / 60);
     const seconds = this.timeSpent % 60;
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+  }
+
+  // Virtual field for remaining cheating warnings
+  get remainingCheatingWarnings(): number {
+    return Math.max(0, this.maxCheatingWarnings - this.cheatingWarnings);
+  }
+
+  // Virtual field to check if exam should be auto-submitted
+  get shouldAutoSubmit(): boolean {
+    return this.cheatingWarnings >= this.maxCheatingWarnings;
   }
 }

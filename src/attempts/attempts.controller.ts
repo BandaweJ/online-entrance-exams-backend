@@ -15,6 +15,7 @@ import { Roles } from "../auth/roles.decorator";
 import { UserRole } from "../users/user.entity";
 import { CreateAttemptDto } from "./dto/create-attempt.dto";
 import { UpdateAttemptDto } from "./dto/update-attempt.dto";
+import { AddCheatingViolationDto } from "./dto/cheating-violation.dto";
 
 @Controller("attempts")
 @UseGuards(JwtAuthGuard)
@@ -80,5 +81,27 @@ export class AttemptsController {
   @Get(":id/time-remaining")
   checkTimeRemaining(@Param("id") id: string, @Request() req) {
     return this.attemptsService.checkTimeRemaining(id, req.user.id);
+  }
+
+  // Anti-cheating endpoints
+  @Post(":id/cheating-violation")
+  addCheatingViolation(
+    @Param("id") attemptId: string,
+    @Body() violationDto: AddCheatingViolationDto,
+    @Request() req,
+  ) {
+    return this.attemptsService.addCheatingViolation(attemptId, violationDto);
+  }
+
+  @Get(":id/cheating-warnings")
+  getCheatingWarnings(@Param("id") attemptId: string, @Request() req) {
+    return this.attemptsService.getCheatingWarnings(attemptId);
+  }
+
+  @Post(":id/reset-cheating-warnings")
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.ADMIN)
+  resetCheatingWarnings(@Param("id") attemptId: string) {
+    return this.attemptsService.resetCheatingWarnings(attemptId);
   }
 }

@@ -13,6 +13,7 @@ import { Exam } from "../exams/exam.entity";
 import { User } from "../users/user.entity";
 import { CreateAttemptDto } from "./dto/create-attempt.dto";
 import { UpdateAttemptDto } from "./dto/update-attempt.dto";
+import { AddCheatingViolationDto, CheatingWarningResponseDto } from "./dto/cheating-violation.dto";
 import { ExamScoringService } from "../scoring/exam-scoring.service";
 import { ResultsService } from "../results/results.service";
 
@@ -355,5 +356,82 @@ export class AttemptsService {
     }
 
     return `${prefix}${nextNumber.toString().padStart(4, "0")}`;
+  }
+
+  // Anti-cheating methods
+  async addCheatingViolation(
+    attemptId: string,
+    violationDto: AddCheatingViolationDto,
+  ): Promise<CheatingWarningResponseDto> {
+    const attempt = await this.attemptRepository.findOne({
+      where: { id: attemptId },
+    });
+
+    if (!attempt) {
+      throw new NotFoundException("Exam attempt not found");
+    }
+
+    if (attempt.status === AttemptStatus.SUBMITTED) {
+      throw new BadRequestException("Cannot add violations to submitted exam");
+    }
+
+    // Create violation record
+    const violation = {
+      type: violationDto.type,
+      description: violationDto.description,
+      timestamp: new Date().toISOString(),
+      metadata: violationDto.metadata || {},
+    };
+
+    // Get existing violations or initialize empty array
+    const existingViolations = attempt.cheatingViolations || [];
+    existingViolations.push(violation);
+
+    // Increment warning count
+    const newWarningCount = attempt.cheatingWarnings + 1;
+
+    // Update attempt
+    await this.attemptRepository.update(attemptId, {
+      cheatingWarnings: newWarningCount,
+      cheatingViolations: existingViolations,
+    });
+
+    // Get updated attempt
+    const updatedAttempt = await this.attemptRepository.findOne({
+      where: { id: attemptId },
+    });
+
+    return {
+      warningCount: updatedAttempt!.cheatingWarnings,
+      maxWarnings: updatedAttempt!.maxCheatingWarnings,
+      remainingWarnings: updatedAttempt!.remainingCheatingWarnings,
+      shouldAutoSubmit: updatedAttempt!.shouldAutoSubmit,
+      violations: existingViolations,
+    };
+  }
+
+  async getCheatingWarnings(attemptId: string): Promise<CheatingWarningResponseDto> {
+    const attempt = await this.attemptRepository.findOne({
+      where: { id: attemptId },
+    });
+
+    if (!attempt) {
+      throw new NotFoundException("Exam attempt not found");
+    }
+
+    return {
+      warningCount: attempt.cheatingWarnings,
+      maxWarnings: attempt.maxCheatingWarnings,
+      remainingWarnings: attempt.remainingCheatingWarnings,
+      shouldAutoSubmit: attempt.shouldAutoSubmit,
+      violations: attempt.cheatingViolations || [],
+    };
+  }
+
+  async resetCheatingWarnings(attemptId: string): Promise<void> {
+    await this.attemptRepository.update(attemptId, {
+      cheatingWarnings: 0,
+      cheatingViolations: [],
+    });
   }
 }
