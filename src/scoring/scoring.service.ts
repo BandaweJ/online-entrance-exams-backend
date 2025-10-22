@@ -39,7 +39,11 @@ export class ScoringService {
       }
 
       // Create contextualized texts by appending question to both answers
-      const contextualizedCorrectAnswer = `${request.question} ${request.correctAnswerText}`;
+      // Vector A: question + correct answer + explanation/rubric
+      // Vector B: question + student answer
+      const contextualizedCorrectAnswer = request.rubric 
+        ? `${request.question} ${request.correctAnswerText} ${request.rubric}`
+        : `${request.question} ${request.correctAnswerText}`;
       const contextualizedStudentAnswer = `${request.question} ${request.studentAnswerText}`;
 
       // Get embeddings for both contextualized texts
@@ -65,7 +69,7 @@ export class ScoringService {
         totalMarks: request.totalMarks,
         feedback,
         confidence: similarity,
-        reasoning: `Similarity score: ${(similarity * 100).toFixed(1)}%`,
+        reasoning: `Similarity score: ${(similarity * 100).toFixed(1)}% (based on question + correct answer${request.rubric ? ' + rubric' : ''} vs question + student answer)`,
       };
     } catch (error) {
       if (error instanceof BadRequestException) {
