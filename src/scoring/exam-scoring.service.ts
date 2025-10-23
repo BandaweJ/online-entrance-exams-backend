@@ -31,10 +31,10 @@ export class ExamScoringService {
     percentage: number;
     gradedAnswers: Answer[];
   }> {
-    // Get the attempt with all related data
+    // Get the attempt with all related data including exam sections and questions
     const attempt = await this.attemptRepository.findOne({
       where: { id: attemptId },
-      relations: ["answers", "answers.question", "exam"],
+      relations: ["answers", "answers.question", "exam", "exam.sections", "exam.sections.questions"],
     });
 
     if (!attempt) {
@@ -57,28 +57,34 @@ export class ExamScoringService {
       gradedAnswers.push(gradedAnswer);
     }
 
-    // Calculate totals
+    // Calculate total marks from ALL questions in ALL sections of the exam
+    // This ensures percentage is calculated out of total exam questions, not just answered ones
+    const allExamQuestions = attempt.exam.sections?.flatMap(section => section.questions || []) || [];
+    const totalExamMarks = allExamQuestions.reduce(
+      (sum, question) => sum + parseFloat(question.marks.toString()),
+      0,
+    );
+
+    // Calculate student's score from answered questions only
     const totalScore = gradedAnswers.reduce(
       (sum, answer) => sum + parseFloat(answer.score.toString()),
       0,
     );
-    const totalMarks = gradedAnswers.reduce(
-      (sum, answer) => sum + parseFloat(answer.maxScore.toString()),
-      0,
-    );
-    const percentage = totalMarks > 0 ? (totalScore / totalMarks) * 100 : 0;
+
+    // Use total exam marks for percentage calculation, not just answered questions
+    const percentage = totalExamMarks > 0 ? (totalScore / totalExamMarks) * 100 : 0;
 
     // Update attempt with scores
     await this.attemptRepository.update(attemptId, {
       score: totalScore,
-      totalMarks: totalMarks,
+      totalMarks: totalExamMarks, // Store total exam marks, not just answered questions
       percentage: percentage,
       isGraded: true,
     });
 
     return {
       totalScore,
-      totalMarks,
+      totalMarks: totalExamMarks, // Return total exam marks
       percentage,
       gradedAnswers,
     };

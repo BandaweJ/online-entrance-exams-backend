@@ -31,7 +31,7 @@ export class ResultsService {
   async generateResult(attemptId: string, studentId: string): Promise<Result> {
     const attempt = await this.attemptRepository.findOne({
       where: { id: attemptId, studentId },
-      relations: ["exam", "student", "answers", "answers.question"],
+      relations: ["exam", "exam.sections", "exam.sections.questions", "student", "answers", "answers.question"],
     });
 
     if (!attempt) {
@@ -67,7 +67,11 @@ export class ResultsService {
     // Calculate statistics from graded answers
     const gradedAnswers = scoringResult.gradedAnswers;
     const questionsAnswered = gradedAnswers.length;
-    const totalQuestions = attempt.totalQuestions;
+    
+    // Calculate total questions from ALL sections of the exam, not just from attempt
+    const allExamQuestions = attempt.exam.sections?.flatMap(section => section.questions || []) || [];
+    const totalQuestions = allExamQuestions.length;
+    
     const correctAnswers = gradedAnswers.filter((a) => a.isCorrect).length;
     const wrongAnswers = questionsAnswered - correctAnswers;
 
