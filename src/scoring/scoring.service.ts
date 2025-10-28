@@ -59,10 +59,10 @@ export class ScoringService {
       );
 
       // Calculate score based on similarity and total marks
-      const score = Math.round(similarity * request.totalMarks * 100) / 100;
+      const score = this.calculateDiscreteScore(similarity, request.totalMarks);
 
       // Generate feedback based on similarity
-      const feedback = this.generateFeedback(similarity, request.questionType);
+      const feedback = this.generateFeedback(similarity);
 
       return {
         score: Math.min(score, request.totalMarks), // Cap at total marks
@@ -126,21 +126,43 @@ export class ScoringService {
     return dotProduct / (normA * normB);
   }
 
-  private generateFeedback(similarity: number, _questionType?: string): string {
+  private calculateDiscreteScore(similarity: number, totalMarks: number): number {
+    const percentage = similarity * 100;
+    let score: number;
+
+    if (percentage >= 90) {
+      score = totalMarks; // full marks
+    } else if (percentage >= 80) {
+      score = 0.8 * totalMarks;
+    } else if (percentage >= 65) {
+      score = 0.6 * totalMarks;
+    } else if (percentage >= 50) {
+      score = 0.4 * totalMarks;
+    } else if (percentage >= 35) {
+      score = 0.2 * totalMarks;
+    } else {
+      score = 0; // < 35%
+    }
+
+    // Return a whole number and cap at totalMarks
+    return Math.min(Math.round(score), totalMarks);
+  }
+
+  private generateFeedback(similarity: number): string {
     const percentage = similarity * 100;
 
     if (percentage >= 90) {
-      return "Excellent answer! Very close to the expected response.";
-    } else if (percentage >= 75) {
-      return "Good answer! Shows strong understanding of the topic.";
-    } else if (percentage >= 60) {
-      return "Fair answer. Some key points are covered but could be improved.";
-    } else if (percentage >= 40) {
-      return "Partial answer. Some relevant points mentioned but missing key concepts.";
-    } else if (percentage >= 20) {
-      return "Limited answer. Very few relevant points covered.";
+      return "Excellent! Fully correct and well explained.";
+    } else if (percentage >= 80) {
+      return "Very good. Minor details missing.";
+    } else if (percentage >= 65) {
+      return "Good effort. Covers most key points.";
+    } else if (percentage >= 50) {
+      return "Fair answer. Some understanding shown.";
+    } else if (percentage >= 35) {
+      return "Weak response. Important points missing.";
     } else {
-      return "Insufficient answer. Does not adequately address the question.";
+      return "Insufficient answer. Does not address the question properly.";
     }
   }
 }

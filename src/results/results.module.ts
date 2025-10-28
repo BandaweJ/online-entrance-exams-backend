@@ -7,6 +7,7 @@ import { Student } from "../students/student.entity";
 import { Exam } from "../exams/exam.entity";
 import { ResultsController } from "./results.controller";
 import { ResultsService } from "./results.service";
+import { PdfExportService } from "./pdf-export.service";
 import { ScoringModule } from "../scoring/scoring.module";
 
 @Module({
@@ -15,7 +16,7 @@ import { ScoringModule } from "../scoring/scoring.module";
     ScoringModule,
   ],
   controllers: [ResultsController],
-  providers: [ResultsService],
-  exports: [ResultsService],
+  providers: [ResultsService, PdfExportService],
+  exports: [ResultsService, PdfExportService],
 })
 export class ResultsModule {}
