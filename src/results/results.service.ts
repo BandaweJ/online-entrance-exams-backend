@@ -118,13 +118,6 @@ export class ResultsService {
     attempt.isGraded = true;
     await this.attemptRepository.save(attempt);
 
-    console.log(`Result created successfully for attempt ${attemptId}:`, {
-      resultId: savedResult.id,
-      studentId: savedResult.studentId,
-      score: savedResult.score,
-      percentage: savedResult.percentage,
-      isPublished: savedResult.isPublished,
-    });
 
     // Create a new object with questionResults included
     const resultWithQuestionResults = {
@@ -140,28 +133,11 @@ export class ResultsService {
     if (studentId) whereCondition.studentId = studentId;
     if (examId) whereCondition.examId = examId;
 
-    console.log('Finding results with condition:', whereCondition);
     const results = await this.resultRepository.find({
       where: whereCondition,
       relations: ["student", "exam", "attempt"],
       order: { createdAt: "DESC" },
     });
-    console.log('Found results:', results.length);
-    
-    // Debug: Check for submitted attempts that should have results
-    const submittedAttempts = await this.attemptRepository.find({
-      where: { status: AttemptStatus.SUBMITTED },
-      relations: ['student', 'exam']
-    });
-    console.log('Found submitted attempts:', submittedAttempts.length);
-    if (submittedAttempts.length > 0) {
-      console.log('Sample submitted attempt:', {
-        id: submittedAttempts[0].id,
-        studentId: submittedAttempts[0].studentId,
-        examId: submittedAttempts[0].examId,
-        isGraded: submittedAttempts[0].isGraded
-      });
-    }
     
     return results;
   }
@@ -244,7 +220,6 @@ export class ResultsService {
       });
       return results;
     } catch (error) {
-      console.error("Error in getStudentResults:", error);
       throw error;
     }
   }

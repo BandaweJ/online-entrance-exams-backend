@@ -38,7 +38,6 @@ export class EmailService {
 
       await this.transporter.sendMail(mailOptions);
     } catch (error) {
-      console.error("Error sending email:", error);
       throw error;
     }
   }
@@ -67,7 +66,6 @@ export class EmailService {
 
       return template;
     } catch (error) {
-      console.error("Error rendering template:", error);
       // Return a simple fallback template
       return this.getFallbackTemplate(templateName, data);
     }

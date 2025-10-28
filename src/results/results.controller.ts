@@ -44,7 +44,6 @@ export class ResultsController {
     @Query("studentId") studentId?: string,
     @Query("examId") examId?: string,
   ) {
-    console.log('Admin requesting all results, studentId:', studentId, 'examId:', examId);
     return this.resultsService.findAll(studentId, examId);
   }
 

@@ -120,7 +120,6 @@ export class ExamScoringService {
         break;
 
       default:
-        console.warn(`Unknown question type: ${question.type}`);
         score = 0;
         feedback = "Unknown question type - not scored";
         isCorrect = false;
@@ -196,11 +195,6 @@ export class ExamScoringService {
         feedback: scoreResponse.feedback || "Graded using OpenAI embeddings",
       };
     } catch (error) {
-      console.error(
-        `OpenAI scoring failed for question ${question.id}:`,
-        error,
-      );
-
       // Fallback to basic keyword matching
       return this.fallbackSubjectiveGrading(
         correctAnswer,

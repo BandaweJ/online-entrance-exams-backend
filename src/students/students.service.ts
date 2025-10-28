@@ -225,7 +225,6 @@ export class StudentsService {
         );
       }
     } catch (error) {
-      console.error("Error sending credentials:", error);
       // Don't throw error to prevent student creation failure
     }
   }

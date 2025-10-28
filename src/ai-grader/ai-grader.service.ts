@@ -53,7 +53,6 @@ export class AiGraderService {
 
       return this.processResponse(response.data);
     } catch (error) {
-      console.error("AI Grader Error:", error);
 
       if (axios.isAxiosError(error)) {
         if (error.response?.status === 400) {
@@ -83,7 +82,6 @@ export class AiGraderService {
         const result = await this.gradeAnswer(request);
         results.push(result);
       } catch (error) {
-        console.error("Error grading individual answer:", error);
         // Add a fallback result for failed grading
         results.push(this.fallbackGrading(request));
       }
