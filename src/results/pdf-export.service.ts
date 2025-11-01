@@ -1,10 +1,37 @@
 import { Injectable } from '@nestjs/common';
-import * as puppeteer from 'puppeteer';
+import * as puppeteer from 'puppeteer-core';
 import * as handlebars from 'handlebars';
 import { Result } from './result.entity';
 
 @Injectable()
 export class PdfExportService {
+  private getChromeExecutablePath(): string | undefined {
+    // Check environment variable first (commonly set by deployment platforms)
+    if (process.env.CHROME_PATH || process.env.PUPPETEER_EXECUTABLE_PATH) {
+      return process.env.CHROME_PATH || process.env.PUPPETEER_EXECUTABLE_PATH;
+    }
+    
+    // For Alpine Linux (Docker deployments), Chromium is typically at:
+    if (process.platform === 'linux') {
+      return '/usr/bin/chromium-browser';
+    }
+    
+    // Common system paths for Chrome/Chromium (fallback)
+    const commonPaths = [
+      '/usr/bin/google-chrome',
+      '/usr/bin/google-chrome-stable',
+      '/usr/bin/chromium',
+      '/usr/bin/chromium-browser',
+      '/snap/bin/chromium',
+      '/usr/local/bin/chrome',
+      '/usr/local/bin/chromium',
+    ];
+    
+    // Try to find Chrome in common paths
+    // Note: Puppeteer will use its default if Chrome is not found
+    return undefined;
+  }
+
   private readonly template = `
 <!DOCTYPE html>
 <html lang="en">
@@ -331,10 +358,17 @@ export class PdfExportService {
   `;
 
   async generateResultPdf(result: Result): Promise<Buffer> {
-    const browser = await puppeteer.launch({
+    const chromePath = this.getChromeExecutablePath();
+    const launchOptions: any = {
       headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    };
+    
+    if (chromePath) {
+      launchOptions.executablePath = chromePath;
+    }
+    
+    const browser = await puppeteer.launch(launchOptions);
 
     try {
       const page = await browser.newPage();
@@ -381,10 +415,17 @@ export class PdfExportService {
   }
 
   async generateBulkResultsPdf(results: Result[]): Promise<Buffer> {
-    const browser = await puppeteer.launch({
+    const chromePath = this.getChromeExecutablePath();
+    const launchOptions: any = {
       headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox']
-    });
+    };
+    
+    if (chromePath) {
+      launchOptions.executablePath = chromePath;
+    }
+    
+    const browser = await puppeteer.launch(launchOptions);
 
     try {
       const page = await browser.newPage();

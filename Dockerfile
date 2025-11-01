@@ -1,6 +1,15 @@
 # Use Node.js 18 Alpine as base image
 FROM node:18-alpine
 
+# Install Chromium and dependencies for Puppeteer
+RUN apk add --no-cache \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ca-certificates \
+    ttf-freefont
+
 # Set working directory
 WORKDIR /app
 
