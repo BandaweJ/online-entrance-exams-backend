@@ -1,23 +1,47 @@
-import { Injectable } from '@nestjs/common';
-import * as puppeteer from 'puppeteer-core';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import * as handlebars from 'handlebars';
+import * as fs from 'fs';
 import { Result } from './result.entity';
+
+// Use regular puppeteer in development (bundles Chrome), puppeteer-core in production
+let puppeteer: any;
+if (process.env.NODE_ENV === 'production') {
+  puppeteer = require('puppeteer-core');
+} else {
+  try {
+    puppeteer = require('puppeteer');
+  } catch (error) {
+    // Fallback to puppeteer-core if puppeteer is not installed
+    puppeteer = require('puppeteer-core');
+  }
+}
 
 @Injectable()
 export class PdfExportService {
   private getChromeExecutablePath(): string | undefined {
+    // In development, if using regular puppeteer (which bundles Chrome), return undefined
+    // to use the bundled Chrome
+    if (process.env.NODE_ENV !== 'production') {
+      try {
+        require.resolve('puppeteer');
+        // Regular puppeteer is installed, use bundled Chrome
+        return undefined;
+      } catch (error) {
+        // puppeteer not installed, fall through to find system Chrome
+      }
+    }
+    
     // Check environment variable first (commonly set by deployment platforms)
     if (process.env.CHROME_PATH || process.env.PUPPETEER_EXECUTABLE_PATH) {
-      return process.env.CHROME_PATH || process.env.PUPPETEER_EXECUTABLE_PATH;
+      const chromePath = process.env.CHROME_PATH || process.env.PUPPETEER_EXECUTABLE_PATH;
+      if (chromePath && fs.existsSync(chromePath)) {
+        return chromePath;
+      }
     }
     
-    // For Alpine Linux (Docker deployments), Chromium is typically at:
-    if (process.platform === 'linux') {
-      return '/usr/bin/chromium-browser';
-    }
-    
-    // Common system paths for Chrome/Chromium (fallback)
+    // Common system paths for Chrome/Chromium
     const commonPaths = [
+      // Linux paths
       '/usr/bin/google-chrome',
       '/usr/bin/google-chrome-stable',
       '/usr/bin/chromium',
@@ -25,10 +49,23 @@ export class PdfExportService {
       '/snap/bin/chromium',
       '/usr/local/bin/chrome',
       '/usr/local/bin/chromium',
+      // macOS paths
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+      '/Applications/Chromium.app/Contents/MacOS/Chromium',
+      // Windows paths (if running on Windows)
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+      'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
     ];
     
     // Try to find Chrome in common paths
-    // Note: Puppeteer will use its default if Chrome is not found
+    for (const chromePath of commonPaths) {
+      if (fs.existsSync(chromePath)) {
+        return chromePath;
+      }
+    }
+    
+    // If no Chrome found, return undefined
+    // This will cause Puppeteer to throw an error, which we'll handle
     return undefined;
   }
 
@@ -259,7 +296,7 @@ export class PdfExportService {
                 </div>
                 <div class="info-item">
                     <div class="info-label">Student ID</div>
-                    <div class="info-value">{{student.studentId}}</div>
+                    <div class="info-value">{{#if student.studentId}}{{student.studentId}}{{else}}N/A{{/if}}</div>
                 </div>
                 <div class="info-item">
                     <div class="info-label">Email</div>
@@ -322,26 +359,33 @@ export class PdfExportService {
         {{#if questionResults}}
         <div class="questions-section">
             <h2>Question-by-Question Review</h2>
+            <p style="color: #666; margin-bottom: 20px;">Review your answers and see the correct solutions</p>
             {{#each questionResults}}
             <div class="question-item">
                 <div class="question-header">
-                    <div class="question-number">Question {{@index}}</div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <div class="question-number">Question {{increment @index}}</div>
+                        <span class="status-badge {{#if isCorrect}}status-passed{{else}}status-failed{{/if}}" style="font-size: 11px; padding: 4px 8px;">
+                            {{#if isCorrect}}Correct{{else}}Incorrect{{/if}}
+                        </span>
+                    </div>
                     <div class="question-marks">{{marksObtained}}/{{totalMarks}} marks</div>
                 </div>
-                <div class="question-text">{{questionText}}</div>
+                <div class="question-text" style="font-weight: 500; margin-bottom: 16px;">{{questionText}}</div>
                 <div class="answer-section">
                     <div class="answer-item student-answer">
-                        <div class="answer-label">Your Answer</div>
-                        <div class="answer-text {{#if isCorrect}}correct{{else}}incorrect{{/if}}">{{studentAnswer}}</div>
+                        <div class="answer-label" style="text-transform: uppercase; letter-spacing: 0.5px;">YOUR ANSWER:</div>
+                        <div class="answer-text" style="padding: 8px 12px; background-color: #f5f5f5; border-radius: 4px; font-family: monospace; {{#if isCorrect}}color: #4caf50;{{else}}color: #f44336;{{/if}}">{{studentAnswer}}</div>
                     </div>
                     <div class="answer-item correct-answer">
-                        <div class="answer-label">Correct Answer</div>
-                        <div class="answer-text">{{correctAnswer}}</div>
+                        <div class="answer-label" style="text-transform: uppercase; letter-spacing: 0.5px;">CORRECT ANSWER:</div>
+                        <div class="answer-text" style="padding: 8px 12px; background-color: #f5f5f5; border-radius: 4px; font-family: monospace;">{{correctAnswer}}</div>
                     </div>
                 </div>
                 {{#if explanation}}
-                <div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 4px; font-size: 14px;">
-                    <strong>Explanation:</strong> {{explanation}}
+                <div style="margin-top: 16px; padding: 16px; background: #e3f2fd; border-radius: 8px; border-left: 4px solid #1976d2;">
+                    <div style="font-weight: bold; color: #1976d2; margin-bottom: 8px; font-size: 14px;">Explanation:</div>
+                    <div style="color: #333; line-height: 1.5;">{{explanation}}</div>
                 </div>
                 {{/if}}
             </div>
@@ -359,16 +403,32 @@ export class PdfExportService {
 
   async generateResultPdf(result: Result): Promise<Buffer> {
     const chromePath = this.getChromeExecutablePath();
+    
     const launchOptions: any = {
       headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     };
     
+    // Only set executablePath if Chrome path is found (production or system Chrome)
+    // In development with regular puppeteer, undefined means use bundled Chrome
     if (chromePath) {
       launchOptions.executablePath = chromePath;
+    } else if (process.env.NODE_ENV === 'production') {
+      // In production, we must have Chrome path
+      throw new BadRequestException(
+        'Chrome/Chromium not found. Please install Chrome or set CHROME_PATH environment variable.'
+      );
     }
     
-    const browser = await puppeteer.launch(launchOptions);
+    let browser;
+    try {
+      browser = await puppeteer.launch(launchOptions);
+    } catch (error: any) {
+      throw new BadRequestException(
+        `Failed to launch Chrome${chromePath ? ` at ${chromePath}` : ''}. ` +
+        `Please ensure Chrome is installed and accessible. Error: ${error.message}`
+      );
+    }
 
     try {
       const page = await browser.newPage();
@@ -391,6 +451,10 @@ export class PdfExportService {
           month: 'long',
           day: 'numeric'
         });
+      });
+
+      handlebars.registerHelper('increment', (value: number) => {
+        return value + 1;
       });
 
       const html = template(templateData);
@@ -416,16 +480,32 @@ export class PdfExportService {
 
   async generateBulkResultsPdf(results: Result[]): Promise<Buffer> {
     const chromePath = this.getChromeExecutablePath();
+    
     const launchOptions: any = {
       headless: 'new',
       args: ['--no-sandbox', '--disable-setuid-sandbox']
     };
     
+    // Only set executablePath if Chrome path is found (production or system Chrome)
+    // In development with regular puppeteer, undefined means use bundled Chrome
     if (chromePath) {
       launchOptions.executablePath = chromePath;
+    } else if (process.env.NODE_ENV === 'production') {
+      // In production, we must have Chrome path
+      throw new BadRequestException(
+        'Chrome/Chromium not found. Please install Chrome or set CHROME_PATH environment variable.'
+      );
     }
     
-    const browser = await puppeteer.launch(launchOptions);
+    let browser;
+    try {
+      browser = await puppeteer.launch(launchOptions);
+    } catch (error: any) {
+      throw new BadRequestException(
+        `Failed to launch Chrome${chromePath ? ` at ${chromePath}` : ''}. ` +
+        `Please ensure Chrome is installed and accessible. Error: ${error.message}`
+      );
+    }
 
     try {
       const page = await browser.newPage();

@@ -10,13 +10,42 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS with production configuration
-  const corsOrigin =
-    process.env.NODE_ENV === "production"
-      ? process.env.CORS_ORIGIN || "https://your-frontend-domain.onrender.com"
-      : process.env.FRONTEND_URL || "http://localhost:4200";
+  // Support multiple origins for different environments
+  const allowedOrigins: string[] = [];
+  
+  if (process.env.NODE_ENV === "production") {
+    // Production origins
+    if (process.env.CORS_ORIGIN) {
+      // Support comma-separated list of origins
+      allowedOrigins.push(...process.env.CORS_ORIGIN.split(',').map(origin => origin.trim()));
+    } else {
+      // Default production origins
+      allowedOrigins.push(
+        "https://online-entrance-exams-frontend.vercel.app",
+        "https://online-entrance-exams.vercel.app"
+      );
+    }
+  } else {
+    // Development origins
+    allowedOrigins.push(
+      process.env.FRONTEND_URL || "http://localhost:4200",
+      "http://localhost:4200"
+    );
+  }
 
   app.enableCors({
-    origin: corsOrigin,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
